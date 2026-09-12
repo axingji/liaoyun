@@ -2502,6 +2502,7 @@ function setOverlay(title, sub){
 // ===== 右侧知识讲解 =====
 function showKnowledge(data, flash=true){
   if(!data) return;
+  stopNarration(); // 切换知识时停止旧语音讲解
   document.getElementById('k-title').textContent = data.title;
   document.getElementById('k-sub').textContent = data.sub;
   document.getElementById('k-body').innerHTML = data.body;
@@ -2516,6 +2517,131 @@ function showKnowledge(data, flash=true){
 function showKnowledgeById(scene, id){
   const data = SCENE_DATA[scene].hotspots.find(h=>h.id===id);
   if(data) showKnowledge(data);
+}
+
+// ===== 语音讲解（优先播放对应录音，无录音则用浏览器 TTS 兜底） =====
+let narrationActive = false;
+let narrationMode = null;   // 'tts' | 'audio'
+let currentAudio = null;
+// 各板块对应的录音文件（音频/mp3 目录，均已在末尾裁剪约 2.5 秒）
+const VOICE_AUDIO = {
+  '抚顺新宾满族剪纸':'音频/mp3/jimeng-2026-09-12-9252.mp3',
+  '满族窗花艺术':'音频/mp3/jimeng-2026-09-12-7736.mp3',
+  '萨满纹样剪纸':'音频/mp3/jimeng-2026-09-12-5497.mp3',
+  '年俗剪纸文化':'音频/mp3/jimeng-2026-09-12-3481.mp3',
+  '鞍山岫岩皮影戏':['音频/mp3/jimeng-2026-09-12-4101.mp3','音频/mp3/jimeng-2026-09-12-4764.mp3'],
+  '岫岩皮影历史':'音频/mp3/jimeng-2026-09-12-4176.mp3',
+  '皮影雕刻工艺':'音频/mp3/jimeng-2026-09-12-4533.mp3',
+  '辽南影调唱腔':'音频/mp3/jimeng-2026-09-12-2185.mp3',
+  '辽阳满族刺绣':'音频/mp3/jimeng-2026-09-12-1548.mp3',
+  '满族枕头顶刺绣':'音频/mp3/jimeng-2026-09-12-3252.mp3',
+  '荷包民俗绣品':'音频/mp3/jimeng-2026-09-12-2296.mp3',
+};
+function playAudioSequence(srcs){
+  narrationMode = 'audio';
+  narrationActive = true;
+  setNarrationUI(true);
+  let i = 0;
+  const next = () => {
+    if(!narrationActive) return;
+    if(i >= srcs.length){
+      narrationActive = false; narrationMode = null; currentAudio = null;
+      setNarrationUI(false);
+      return;
+    }
+    const a = new Audio(srcs[i++]);
+    currentAudio = a;
+    a.onended = next;
+    a.onerror = () => { if(narrationActive) stopNarration(); };
+    a.play().catch(()=>{ stopNarration(); });
+  };
+  next();
+}
+function getChineseVoice(){
+  if(!('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find(v=>/zh|cmn|Chinese/i.test(v.lang) || /zh/i.test(v.name)) || null;
+}
+function narrationText(){
+  const title = (document.getElementById('k-title').textContent || '').trim();
+  const body = (document.getElementById('k-body').innerText || '').replace(/\n+/g,' ').trim();
+  if(!body) return '';
+  return (title === '非遗档案' ? '' : title + '。') + body;
+}
+function setNarrationUI(on){
+  const btn = document.getElementById('k-audio-btn');
+  if(btn) btn.classList.toggle('speaking', on);
+  const body = document.getElementById('k-body');
+  if(body) body.classList.toggle('speaking', on);
+}
+function stopNarration(){
+  if(currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  narrationMode = null;
+  narrationActive = false;
+  setNarrationUI(false);
+}
+function toggleNarration(){
+  if(narrationActive){ stopNarration(); return; }
+  const title = (document.getElementById('k-title').textContent || '').trim();
+  const audioSrcs = VOICE_AUDIO[title];
+  if(audioSrcs){
+    playAudioSequence(Array.isArray(audioSrcs) ? audioSrcs : [audioSrcs]);
+    return;
+  }
+  if(!('speechSynthesis' in window)){
+    alert('当前浏览器不支持语音合成');
+    return;
+  }
+  const text = narrationText();
+  if(!text){ alert('暂无知识讲解内容'); return; }
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'zh-CN';
+  utter.rate = 0.95;
+  const v = getChineseVoice();
+  if(v) utter.voice = v;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+  narrationMode = 'tts';
+  narrationActive = true;
+  setNarrationUI(true);
+}
+// 自动检测 TTS 朗读结束，复位按钮态（录音模式由播放结束事件自复位）
+if('speechSynthesis' in window){
+  setInterval(()=>{
+    if(!narrationActive || narrationMode === 'audio') return;
+    if(window.speechSynthesis.speaking || window.speechSynthesis.pending) return;
+    narrationActive = false; narrationMode = null;
+    setNarrationUI(false);
+  }, 500);
+}
+
+// ===== 板块视频介绍（随展厅切换对应视频，按钮弹出） =====
+const GROUP_VIDEOS = {paper:'videos/jianzhi.mp4', puppet:'videos/piying.mp4', emb:'videos/cixiu.mp4'};
+const GROUP_VIDEO_NAMES = {paper:'新宾满族剪纸 · 视频介绍', puppet:'岫岩皮影 · 视频介绍', emb:'辽阳满族刺绣 · 视频介绍'};
+function loadGroupVideo(group){
+  const video = document.getElementById('group-video');
+  if(!video) return;
+  const name = GROUP_VIDEO_NAMES[group] || '板块视频介绍';
+  const sub = document.getElementById('video-pop-sub');
+  if(sub) sub.textContent = name;
+  const src = GROUP_VIDEOS[group];
+  let source;
+  if(video.querySelector('source')) source = video.querySelector('source');
+  else { source = document.createElement('source'); source.type='video/mp4'; video.appendChild(source); }
+  if(src && source.src !== new URL(src, location.href).href){ source.src = src; video.load(); }
+}
+function openGroupVideo(){
+  const group = STATE.currentScene || 'paper';
+  loadGroupVideo(group);
+  const overlay = document.getElementById('video-overlay');
+  if(overlay) overlay.classList.add('show');
+}
+function closeGroupVideo(){
+  const overlay = document.getElementById('video-overlay');
+  if(overlay) overlay.classList.remove('show');
+  const video = document.getElementById('group-video');
+  if(video){ video.pause(); }
 }
 
 // ===== 动画循环 =====
@@ -2886,6 +3012,8 @@ function switchScene(name, cb){
   if(STATE.switching) return;
   if(STATE.currentScene === name){ if(cb) cb(); return; }
   STATE.switching = true;
+  const gv = document.getElementById('group-video');
+  if(gv && !gv.paused) gv.pause(); // 切换展厅时暂停当前视频
   const mask = document.getElementById('transition-mask');
   const maskText = document.getElementById('mask-text');
   const maskSub = document.getElementById('mask-sub');
@@ -2924,6 +3052,7 @@ function switchScene(name, cb){
   setTimeout(()=>mask.classList.add('reveal'), 600); // 第二幕 · 揭名
   setTimeout(()=>{
     STATE.currentScene = name;
+    loadGroupVideo(name); // 展区切换后预载对应板块视频
     if(STATE.journey && STATE.journey.scenes) STATE.journey.scenes.add(name);
     bgmSwitchScene(name); // 背景音乐无缝换曲
     puppetSceneGroup.visible = (name === 'puppet');
@@ -3997,6 +4126,7 @@ window.addEventListener('load', ()=>{
   buildNav();
   markVisited(0);
   showKnowledge(SCENE_DATA.paper.intro, false);
+  loadGroupVideo('paper'); // 默认预载剪纸板块视频
   animate();
   // 开篇叙事：一源三流（同源纹样分化为三门非遗）→ 结束后进厅
   playOpeningNarrative(()=>{
@@ -4016,7 +4146,7 @@ window.addEventListener('load', ()=>{
 
 // 键盘快捷键
 document.addEventListener('keydown', (e)=>{
-  if(e.key === 'Escape'){ closeModal(); closePuzzle(); closeStitch(); closeManip(); closeCarve(); closeThread(); closeQuiz(); closeLab(); closeGen(); closeRestore(); closeTopo(); closeCodes(); closeFlow(); closeAsm(); closeDrama(); closeEmbGame(); closeShop(); }
+  if(e.key === 'Escape'){ closeModal(); closePuzzle(); closeStitch(); closeManip(); closeCarve(); closeThread(); closeQuiz(); closeLab(); closeGen(); closeRestore(); closeTopo(); closeCodes(); closeFlow(); closeAsm(); closeDrama(); closeEmbGame(); closeShop(); closeGroupVideo(); }
   if(e.key === ' '){ e.preventDefault(); toggleRoam(); }
   if(e.key === 'Tab'){ e.preventDefault(); toggleScene(); }
 });

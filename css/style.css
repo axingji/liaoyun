@@ -126,10 +126,37 @@ canvas{display:block;}
 .k-body{font-size:12px;line-height:1.9;color:var(--text);opacity:.92;max-height:340px;overflow-y:auto;}
 .k-body p{margin-bottom:8px;}
 .k-body .highlight{color:var(--gold-light);font-weight:500;}
+
+/* 语音讲解按钮 */
+.k-audio{margin:2px 0 8px;}
+.k-audio-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;font-size:12px;
+  font-family:'Noto Sans SC',sans-serif;color:var(--gold-light);letter-spacing:1px;cursor:pointer;
+  background:rgba(196,30,58,.18);border:1px solid rgba(212,168,67,.4);border-radius:20px;
+  transition:all .3s;}
+.k-audio-btn:hover{border-color:var(--gold);background:rgba(196,30,58,.32);}
+.k-audio-btn.speaking{background:rgba(196,30,58,.4);border-color:var(--gold);
+  animation:uiBreathe 1.4s ease-in-out infinite;}
+.k-body.speaking p{transition:background .4s;}
+.k-body.speaking p.active{background:rgba(212,168,67,.12);border-left:2px solid var(--gold);
+  padding-left:6px;border-radius:3px;}
 .mini-card{border:1px solid rgba(212,168,67,.3);border-left:3px solid var(--gold);border-radius:8px;
   padding:10px 12px;background:rgba(22,22,42,.6);}
 .mini-title{font-size:12px;color:var(--gold-light);letter-spacing:2px;margin-bottom:5px;}
 .mini-card p{font-size:11px;line-height:2;color:var(--paper);opacity:.8;}
+
+/* ===== 板块视频介绍 ===== */
+.ctrl-video{border-color:rgba(196,30,58,.6) !important;}
+#video-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:320;
+  background:rgba(0,0,0,.78);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s ease;}
+#video-overlay.show{opacity:1;pointer-events:auto;}
+#video-overlay .puzzle-box{transform:scale(.7);opacity:0;transition:all .5s cubic-bezier(.34,1.56,.64,1);}
+#video-overlay.show .puzzle-box{transform:scale(1);opacity:1;}
+.video-pop{width:min(720px,92vw);}
+.video-pop .vc-ico{font-size:18px;}
+#video-overlay #group-video{display:block;width:100%;max-width:100%;aspect-ratio:16/9;
+  border-radius:8px;background:#000;outline:none;border:1px solid rgba(212,168,67,.3);}
 
 /* ===== 底部控制栏 ===== */
 #bottom-bar{position:fixed;bottom:44px;left:50%;transform:translateX(-50%);z-index:115;
