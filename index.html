@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>辽韵三萃——辽宁皮影、满族剪纸与满族刺绣沉浸式3D交互H5</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<link rel="stylesheet" href="css/style.css?v=5">
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js" integrity="sha384-vV17nr/rMaJqmeZkFUzXLpHdQ+ME5QHKdydaqqN+3Ga39RJlNrTatJxHwGV4ml2C" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+<!-- 加载界面 -->
+<div id="loading-screen">
+  <div class="loading-title">辽韵三萃</div>
+  <div class="loading-sub">基于纹样同源理论的辽宁满族非遗活态传承 · 沉浸式3D交互H5</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
+  <div class="loading-pct" id="loading-pct">0%</div>
+  <div class="loading-ornament"><span></span><span></span><span></span></div>
+</div>
+
+<!-- 3D画布 -->
+<div id="canvas-container"></div>
+
+<!-- 开篇叙事动画：一源三流（同源纹样分化为三门非遗） -->
+<div id="opening-overlay">
+  <canvas id="opening-canvas"></canvas>
+  <div class="opening-caption" id="opening-caption"></div>
+  <!-- 方案A：加载即叙事 · 迷你加载条覆盖在开场动画上 -->
+  <div class="opening-load" id="opening-load">
+    <span class="opening-load-title">纹样孕育中</span>
+    <div class="opening-load-track"><span id="opening-load-bar"></span></div>
+    <span class="opening-load-pct" id="opening-load-pct">0%</span>
+  </div>
+  <div class="opening-skip" onclick="skipOpening()">跳过 ›</div>
+  <div class="opening-brand">
+    <img class="ob-logo" src="logo.jpg" alt="辽韵三萃">
+    <div class="ob-title">辽韵三萃</div>
+    <div class="ob-sub">一脉辽纹 · 三艺共生</div>
+  </div>
+</div>
+
+<!-- 空间虚实叠层（视差前景/中景） -->
+<div id="mg-layer"></div>
+<div id="fg-layer"></div>
+
+<!-- 声音可视化频谱 -->
+<div id="spectrum-panel"><canvas id="spectrum-cv" width="240" height="70"></canvas><div class="spec-label">声光共振 · 五维同步</div></div>
+
+<!-- 转场蒙版（材质化 · 载体合拢/展开） -->
+<div id="transition-mask">
+  <div class="mt-panel mt-pL"></div>
+  <div class="mt-panel mt-pR"></div>
+  <div class="mask-seam"></div>
+  <div class="mask-line l"></div>
+  <div class="mask-line r"></div>
+  <div class="mask-text" id="mask-text">辽韵三萃</div>
+  <div class="mask-sub" id="mask-sub"></div>
+  <!-- 转场中央 · 展区代表性例证展示 -->
+  <div class="mask-samples" id="mask-samples"></div>
+</div>
+
+<!-- 混合交互 · 满绣双面枕顶（CSS 3D翻面卡 ⇄ 场景3D模型联动） -->
+<div id="flip-panel">
+  <div class="fp-close" id="fp-close" title="收起">×</div>
+  <div class="fp-head"><span id="fp-title">满绣双面枕顶</span><span class="fp-sub">点选绣品放大查看 · 点下方按钮翻面</span></div>
+  <div class="flip-stage" id="flip-stage">
+    <div class="flip-card" id="flip-card">
+      <div class="flip-face fp-front"><img id="fp-front-img" alt="正面绣样"><div class="fp-cap">正面 · 吉祥绣样</div></div>
+      <div class="flip-face fp-back"><img id="fp-back-img" alt="背面针法"><div class="fp-cap">背面 · 藏针线迹</div></div>
+    </div>
+  </div>
+  <div class="fp-ctl">
+    <span class="fp-face" id="fp-face">正面</span>
+    <button class="fp-btn" id="fp-turn" type="button">翻面 ⟳</button>
+  </div>
+</div>
+
+<!-- 顶部栏 -->
+<header id="top-bar">
+  <div class="brand">
+    <img class="brand-icon" src="logo.jpg" alt="辽韵三萃">
+    <div class="brand-name">辽韵三萃</div>
+    <div class="brand-divider"></div>
+    <div class="brand-sub">鞍山岫岩皮影 × 新宾满族剪纸 × 辽阳满族刺绣</div>
+  </div>
+  <div class="top-right">
+    <div class="progress-chip">
+      <span class="chip-label">探索进度</span>
+      <span class="progress-track"><span id="explore-bar"></span></span>
+      <span class="chip-num" id="explore-count">0/16</span>
+    </div>
+    <div class="mode-chip">辽宁非遗 · 沉浸交互</div>
+  </div>
+</header>
+
+<!-- 移动端面板开关 -->
+<button id="left-toggle" class="panel-toggle left" title="场景导航" onclick="togglePanel('left')">☰</button>
+<button id="right-toggle" class="panel-toggle right" title="知识讲解" onclick="togglePanel('right')">☰</button>
+
+<!-- 左侧：场景导航 -->
+<aside id="left-panel">
+  <div class="panel-header">纹样溯源 · 三大载体</div>
+  <nav id="nav-list"></nav>
+  <!-- 非遗总结 · 主题升华 醒目入口 -->
+  <button id="finale-entry" onclick="openFinale()">
+    <span class="fe-icon">✦</span>
+    <span class="fe-txt"><b>非遗总结 · 主题升华</b><i>终章 · 一脉辽纹 三艺同辉</i></span>
+  </button>
+  <div class="hint-card" id="hint-card">
+    <div class="hint-title" onclick="toggleHintCard()">操作提示 <span class="hint-arrow">▾</span></div>
+    <div class="hint-body">
+      <div class="hint-row"><span class="key">左键拖拽</span>旋转视角</div>
+      <div class="hint-row"><span class="key">滚轮</span>缩放远近</div>
+      <div class="hint-row"><span class="key">点击物件</span>递进交互</div>
+      <div class="hint-row"><span class="key">Tab 键</span>三展区轮切</div>
+      <div class="hint-row"><span class="key">纹样流转</span>剪纸→皮影→刺绣</div>
+    </div>
+  </div>
+</aside>
+
+<!-- 场景覆盖标题 -->
+<div id="scene-overlay">
+  <div class="overlay-badge" id="overlay-title">新宾满族剪纸</div>
+  <div class="overlay-sub" id="overlay-sub">纹样母体 · 满韵遗风</div>
+</div>
+
+<!-- 右侧：知识点讲解 -->
+<aside id="right-panel">
+  <div class="panel-header">知识点讲解</div>
+  <div class="slogan-card">
+    <span class="slogan-mark">❖</span>
+    <span class="slogan-text">一脉辽纹，三艺共生<br><b>剪纸为源 · 皮影转韵 · 刺绣赋彩</b></span>
+  </div>
+  <div class="intro-card">
+    <div class="intro-title">一主两辅 · 纹样流转玩法</div>
+    <p>新宾满族剪纸是<b>纹样母体</b>（主）；岫岩皮影、辽阳满族刺绣是同源纹样的<b>不同物质载体</b>（辅）。</p>
+    <p>请先在剪纸模块<b>选取或刻绘</b>纹样，再体验皮影演绎、刺绣走线，观察同一纹样在<b>纸、皮料、织物</b>上的艺术变化。</p>
+  </div>
+  <div class="knowledge-card" id="knowledge-card">
+    <div class="k-title" id="k-title">非遗档案</div>
+    <div class="k-sub" id="k-sub">点击左侧导航或场景中的物件</div>
+    <div class="k-body" id="k-body"></div>
+  </div>
+  <div class="mini-card">
+    <div class="mini-title">载体变体 · 衍生玩法</div>
+    <p>· 剪纸是纹样母体：刻绘/选取纹样后即"诞生"<br>
+       · 底部「纹样流转」选母题一键切换纸、皮、布载体<br>
+       · 皮影演绎（辅）：复用剪纸纹样生成皮偶 · 不做独立雕刻<br>
+       · 刺绣走线（辅）：复用剪纸纹样轮廓 · 只做走线穿针<br>
+       · 皮影开演剧目 → 联动剪纸展板 + 刺绣故事枕顶</p>
+  </div>
+  <!-- 纹样基因档案 -->
+  <div class="gene-archive" id="gene-archive" style="display:none;">
+    <div class="ga-header" onclick="toggleGeneArchive()">
+      <span>🧬 纹样基因档案</span><span class="ga-arrow">▾</span>
+    </div>
+    <div class="ga-body" id="ga-body"></div>
+  </div>
+  <!-- 传承人音频彩蛋 -->
+  <div class="audio-egg" id="audio-egg" style="display:none;">
+    <button class="audio-play-btn" id="audio-play-btn" onclick="playMasterAudio()">🔊 传承人口述</button>
+    <div class="audio-meta" id="audio-meta"></div>
+  </div>
+</aside>
+
+<!-- 左侧导航 · 窗帘拉手（收起 / 放下） -->
+<div id="left-curtain" title="收起 / 放下导航">
+  <span class="rc-icon">☰</span><span id="lc-text">收起</span>
+</div>
+<!-- 右侧知识卡 · 窗帘拉手（收起 / 放下） -->
+<div id="right-curtain" title="收起 / 放下知识">
+  <span class="rc-icon">☰</span><span id="rc-text">收起</span>
+</div>
+
+<!-- 弹窗 -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <h2 id="modal-title">标题</h2>
+    <div class="modal-sub" id="modal-sub">副标题</div>
+    <div class="modal-body" id="modal-body"></div>
+    <button class="modal-close" onclick="closeModal()">关 闭</button>
+  </div>
+</div>
+
+<!-- 完结撒花 · 探索满格庆祝按钮 -->
+<button id="confetti-btn" class="hide" onclick="playCelebration()">🎉 完结撒花</button>
+<canvas id="confetti-canvas"></canvas>
+<!-- 完结撒花 · 幕布 -->
+<div id="curtain" class="hide">
+  <div class="curtain-in"><b>完结撒花</b><span>11 处探访 · 你已走通辽纹三态</span></div>
+</div>
+<!-- 完结撒花 · 辽纹长歌（字幕自底向上） -->
+<div id="poem">
+  <div id="poem-track">
+    <div class="poem-line poem-title">· 辽 纹 长 歌 ·</div>
+    <div class="poem-line">当最后一片纹样落下，</div>
+    <div class="poem-line">你在纸、皮、布之间，</div>
+    <div class="poem-line">拾起了同一种心跳。</div>
+    <div class="poem-line">— 一 · 源 —</div>
+    <div class="poem-line">那团花从红纸里破土，</div>
+    <div class="poem-line">随驴皮影摇身成傀儡，</div>
+    <div class="poem-line">又被一根金线绣回人间。</div>
+    <div class="poem-line">— 三 · 态 —</div>
+    <div class="poem-line">一源三态，从不是传说——</div>
+    <div class="poem-line">它只是你指尖的一场流转。</div>
+    <div class="poem-line">—</div>
+    <div class="poem-line">人随艺存 · 艺随人传</div>
+    <div class="poem-line">愿你无论去向何方，</div>
+    <div class="poem-line">都记得：辽纹在，故乡便在。</div>
+  </div>
+</div>
+
+<!-- 拼窗花小游戏 -->
+<div id="puzzle-overlay" onclick="if(event.target===this)closePuzzle()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">折剪窗花工艺</div>
+    <div class="puzzle-sub">选折叠方式 · 沿金线走剪镂空 · 展开成满族窗花</div>
+    <canvas id="puzzle-canvas" width="520" height="520"></canvas>
+    <div class="puzzle-foot">
+      <span id="puzzle-count">已拼 0/7</span>
+      <button class="modal-close puzzle-close" onclick="closePuzzle()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 绣样拼贴创作 -->
+<div id="stitch-overlay" onclick="if(event.target===this)closeStitch()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">满绣针法模拟</div>
+    <div class="puzzle-sub">选平绣/锁绣/盘金/打籽 · 沿纹样轮廓走针 · 一针一线皆匠心</div>
+    <div id="stitch-palette"></div>
+    <canvas id="stitch-canvas" width="520" height="360"></canvas>
+    <div class="puzzle-foot">
+      <div class="stitch-tools">
+        <button class="tool-btn" onclick="rotateStitchSel()">旋 转</button>
+        <button class="tool-btn" onclick="deleteStitchSel()">删 除</button>
+        <button class="tool-btn" onclick="clearStitch()">清 空</button>
+        <button class="tool-btn" onclick="closeStitch();openThread();">走线工坊</button>
+      </div>
+      <button class="modal-close puzzle-close" onclick="makeStitchCard()">生成文创卡片</button>
+      <button class="modal-close puzzle-close" onclick="closeStitch()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 皮影操纵模拟器 -->
+<div id="manip-overlay" onclick="if(event.target===this)closeManip()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">皮影光影叙事</div>
+    <div class="puzzle-sub">拖光源角度控制影子虚实 · 编排默剧动作序列 · 一光一影皆是戏</div>
+    <div class="manip-tasks">
+      <span id="manip-t1" class="task-chip">① 抬手</span>
+      <span id="manip-t2" class="task-chip">② 转身</span>
+      <button class="tool-btn" id="manip-card-btn" onclick="makeManipCard()" style="display:none;">领取数字纪念卡</button>
+    </div>
+    <canvas id="manip-canvas" width="640" height="420"></canvas>
+    <div class="puzzle-foot">
+      <button class="tool-btn" onclick="resetManip()">重 置</button>
+      <button class="modal-close puzzle-close" onclick="closeManip()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 剪纸刻绘解谜 -->
+<div id="carve-overlay" onclick="if(event.target===this)closeCarve()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">剪纸刻绘解谜</div>
+    <div class="puzzle-sub">鼠标为刻刀 · 沿黑色纹样滑动镂空 · 刻出红线外扣分 · 完成后纹样同步刺绣展厅</div>
+    <div class="carve-head">
+      <button class="tool-btn" id="carve-p1" onclick="initCarve('shaman')">萨满纹样</button>
+      <button class="tool-btn" id="carve-p2" onclick="initCarve('fu')">福字年俗</button>
+      <div class="carve-track"><span id="carve-bar"></span></div>
+      <span id="carve-score" class="carve-score">100分</span>
+    </div>
+    <canvas id="carve-canvas" width="520" height="520"></canvas>
+    <div class="puzzle-foot">
+      <button class="modal-close puzzle-close" onclick="closeCarve()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 刺绣走线工坊 -->
+<div id="thread-overlay" onclick="if(event.target===this)closeThread()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">满族刺绣走线工坊</div>
+    <div class="puzzle-sub">沿金色引导点移动鼠标 · 虚拟针线随轨迹铺出绣线 · 绣完整枕头顶</div>
+    <div class="manip-tasks">
+      <span id="thread-step" class="task-chip">走线 0%</span>
+      <button class="tool-btn" id="thread-save" onclick="makeThreadCard()" style="display:none;">保存枕顶绣品</button>
+      <button class="tool-btn" id="thread-sync" onclick="syncThreadToPuppet()" style="display:none;">同步皮影服饰</button>
+    </div>
+    <canvas id="thread-canvas" width="520" height="520"></canvas>
+    <div class="puzzle-foot">
+      <button class="tool-btn" onclick="resetThread()">换纹样</button>
+      <button class="modal-close puzzle-close" onclick="closeThread()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 纹样溯源挑战 -->
+<div id="quiz-overlay" onclick="if(event.target===this)closeQuiz()">
+  <div class="puzzle-box quiz-box">
+    <div class="puzzle-title">非遗纹样溯源挑战</div>
+    <div class="puzzle-sub">拖动纹样卡片到它最早起源的非遗展区 · 验证"剪纸是纹样母源"</div>
+    <div class="quiz-head"><span id="quiz-progress">第 1/6 题</span><span id="quiz-score">得分 0</span></div>
+    <div class="quiz-stage" id="quiz-stage"></div>
+    <div class="puzzle-foot">
+      <button class="modal-close puzzle-close" onclick="closeQuiz()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 纹样母体 · 载体流转（一主两辅核心交互） -->
+<div id="flow-overlay" onclick="if(event.target===this)closeFlow()">
+  <div class="puzzle-box flow-box">
+    <div class="puzzle-title">纹样母体 · 载体流转</div>
+    <div class="puzzle-sub">剪纸是纹样母体 · 选中一款母题 → 一键流转映射皮影皮偶 / 刺绣织物 · 见证"一源三态"</div>
+    <div class="flow-mats" id="flow-mats"></div>
+    <div class="flow-prev" id="flow-prevs"></div>
+    <div class="flow-chain" id="flow-chain"></div>
+    <div class="carve-head">
+      <button class="tool-btn flow-go" id="flow-go-puppet" onclick="flowTo('puppet')">▶ 流转到皮影戏台</button>
+      <button class="tool-btn flow-go" id="flow-go-emb" onclick="flowTo('emb')">▶ 流转到刺绣绣布</button>
+      <button class="tool-btn flow-go deliver" onclick="deliverPattern()">✦ 纹样投递到双展厅</button>
+      <button class="tool-btn" onclick="showFlowKnowledge()">纹样为何同源？</button>
+    </div>
+    <div class="puzzle-foot">
+      <span id="flow-tip" class="flow-tip">流转链路：纹样诞生（剪纸） → 皮影演绎 → 刺绣织造</span>
+      <button class="modal-close puzzle-close" onclick="closeFlow()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 载体形态流转特效（纸→皮 / 纸→布 形态变化可视化） -->
+<div id="morph-overlay">
+  <canvas id="morph-canvas" width="720" height="480"></canvas>
+  <div class="morph-cap" id="morph-cap"></div>
+</div>
+
+<!-- 鎏金成就闪光 -->
+<div id="gold-flash"></div>
+
+<!-- 底部控制栏 -->
+<!-- 创新实验室 -->
+<div id="lab-overlay" onclick="if(event.target===this)closeLab()">
+  <div class="puzzle-box lab-box">
+    <div class="puzzle-title">辽韵创新实验室</div>
+    <div class="puzzle-sub">十大顶级创新 · AI生成 × 时序演变 × 声光共振 × 文物修复 × 拓扑映射</div>
+    <div class="lab-grid">
+      <div class="lab-card"><div class="lc-ico">✧</div><b>AI纹样生成</b><small>上传辽宁风景/民俗照 → 智能提取轮廓 → 生成专属满族剪纸纹样 → 实时贴皮影/刺绣/展板</small><button class="tool-btn" onclick="openGen()">开始生成</button></div>
+      <div class="lab-card"><div class="lc-ico">⏳</div><b>时序演变</b><small>上古摹初纹 → 清代满剪 → 近代皮影 → 现代国潮 · 贴图/配色/灯光一键换代</small><button class="tool-btn" onclick="cycleEra()">切换时代</button><div class="lab-chip" id="era-chip">未开启</div></div>
+      <div class="lab-card"><div class="lc-ico">❄</div><b>四季辽韵</b><small>春花信/夏萤川/秋金落/冬辽雪 · 灯光雾色粒子全域换季</small>
+        <div class="season-chips" id="season-chips">
+          <button class="tool-btn" onclick="applySeason(0)">春</button><button class="tool-btn" onclick="applySeason(1)">夏</button><button class="tool-btn" onclick="applySeason(2)">秋</button><button class="tool-btn" onclick="applySeason(3)">冬</button>
+        </div></div>
+      <div class="lab-card"><div class="lc-ico">♪</div><b>声光频谱联动</b><small>唱腔/旋律实时驱动光影粒子丝线 · 声光影纹丝五维同步</small><button class="tool-btn" id="ar-btn" onclick="toggleAudioReactive()">开启联动</button><div class="lab-chip" id="ar-chip">先播放底部音频</div></div>
+      <div class="lab-card"><div class="lc-ico">⚒</div><b>文物修复</b><small>残破剪纸/褪色皮影/破损枕顶 · 金线涂抹智能修复 · 鎏金重生</small><button class="tool-btn" onclick="openRestore()">进入修复</button></div>
+      <div class="lab-card"><div class="lc-ico">◇</div><b>拓扑曲面映射</b><small>首创二维纹样拓扑映射三维皮影曲面 · 智能形变贴合</small><button class="tool-btn" onclick="openTopo()">查看演示</button></div>
+      <div class="lab-card"><div class="lc-ico">🎬</div><b>智能镜头叙事</b><small>看皮影→戏剧推拉 / 剪纸→俯瞰环摇 / 刺绣→微距漂移 · 全自动电影运镜</small><button class="tool-btn" id="cin-btn" onclick="toggleCinema()">运镜：开</button></div>
+      <div class="lab-card"><div class="lc-ico">🌌</div><b>空间虚实叠层</b><small>前景窗花剪影/中景光雾/后景展馆三层视差 · 电影级景深</small><button class="tool-btn" id="par-btn" onclick="toggleParallax()">视差：开</button></div>
+      <div class="lab-card"><div class="lc-ico">🔐</div><b>纹样密码册</b><small>打卡/游戏/创新玩法解锁16枚辽韵纹样密码 · 集齐生成防伪数字证书</small><button class="tool-btn" onclick="openCodes()">查看密码册</button></div>
+      <div class="lab-card"><div class="lc-ico">📚</div><b>文化与数据价值</b><small>传承人语录 · 纹样民俗寓意 · 参考文献 · 中小学美育课堂应用数据</small><button class="tool-btn" onclick="showValueReport()">查看详情</button></div>
+    </div>
+    <div class="puzzle-foot"><button class="modal-close puzzle-close" onclick="closeLab()">关 闭</button></div>
+  </div>
+</div>
+
+<!-- AI纹样生成 -->
+<div id="gen-overlay" onclick="if(event.target===this)closeGen()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">非遗纹样AI生成</div>
+    <div class="puzzle-sub">上传辽宁风景/民俗照片 · 智能提取轮廓 · 对称成剪纸纹样 · 一键贴三展厅</div>
+    <div class="carve-head">
+      <label class="tool-btn gen-file-label" for="gen-file">① 选择照片</label>
+      <input type="file" id="gen-file" accept="image/*" style="display:none" onchange="genFromFile(this)">
+      <button class="tool-btn" onclick="regenGen()">② 换风格重生成</button>
+    </div>
+    <canvas id="gen-canvas" width="440" height="440"></canvas>
+    <div class="carve-head">
+      <button class="tool-btn" onclick="applyGen('puppet')">贴皮影服饰</button>
+      <button class="tool-btn" onclick="applyGen('emb')">贴刺绣绣纹</button>
+      <button class="tool-btn" onclick="applyGen('paper')">入藏剪纸展板</button>
+    </div>
+    <div class="puzzle-foot"><button class="modal-close puzzle-close" onclick="closeGen()">关 闭</button></div>
+  </div>
+</div>
+
+<!-- 文物修复 -->
+<div id="restore-overlay" onclick="if(event.target===this)closeRestore()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">非遗文物修复</div>
+    <div class="puzzle-sub">按住鼠标涂抹残缺处 · 金线游走补全纹样 · 修复完成触发鎏金重生</div>
+    <div class="carve-head">
+      <button class="tool-btn" id="rest-p" onclick="initRestore('paper')">残破满剪</button>
+      <button class="tool-btn" id="rest-f" onclick="initRestore('puppet')">褪色皮影</button>
+      <button class="tool-btn" id="rest-e" onclick="initRestore('emb')">破损枕顶</button>
+      <div class="carve-track"><span id="rest-bar"></span></div>
+    </div>
+    <canvas id="rest-canvas" width="440" height="440"></canvas>
+    <div class="puzzle-foot"><button class="modal-close puzzle-close" onclick="closeRestore()">关 闭</button></div>
+  </div>
+</div>
+
+<!-- 拓扑曲面映射 -->
+<div id="topo-overlay" onclick="if(event.target===this)closeTopo()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">纹样拓扑曲面映射</div>
+    <div class="puzzle-sub">二维剪纸纹样 → 实时形变贴合三维皮影曲面 · 告别死板平铺贴图</div>
+    <canvas id="topo-canvas" width="520" height="300"></canvas>
+    <div class="carve-head"><button class="tool-btn" onclick="applyTopo()">应用曲面映射到皮影</button></div>
+    <div class="puzzle-foot"><button class="modal-close puzzle-close" onclick="closeTopo()">关 闭</button></div>
+  </div>
+</div>
+
+<!-- 纹样密码册 -->
+<div id="codes-overlay" onclick="if(event.target===this)closeCodes()">
+  <div class="puzzle-box lab-box">
+    <div class="puzzle-title">辽韵纹样密码册</div>
+    <div class="puzzle-sub" id="codes-progress">已收集 0/13 枚纹样密码</div>
+    <div class="codes-grid" id="codes-grid"></div>
+    <div class="puzzle-foot">
+      <button class="tool-btn" onclick="makeCertificate()">生成防伪数字证书</button>
+      <button class="modal-close puzzle-close" onclick="closeCodes()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏1：纹样溯源拼图（3D碎片复原） -->
+<div id="asm-overlay" onclick="if(event.target===this)closeAsm()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">纹样基因演化</div>
+    <div class="puzzle-sub">3×3碎片复原 · 解锁千年演化时间轴 · 从上古图腾到当代国潮</div>
+    <div class="carve-head">
+      <button class="tool-btn" id="asm-m0" onclick="initAsm(0)">团花</button>
+      <button class="tool-btn" id="asm-m1" onclick="initAsm(1)">福字</button>
+      <button class="tool-btn" id="asm-m2" onclick="initAsm(2)">萨满</button>
+      <button class="tool-btn" id="asm-m3" onclick="initAsm(3)">连年有余</button>
+      <span class="task-chip" id="asm-count">已复原 0/9</span>
+    </div>
+    <canvas id="asm-canvas" width="520" height="520"></canvas>
+    <div class="puzzle-foot">
+      <span class="flow-tip" id="asm-tip">碎片悬浮漂浮 · 拖到正确格位即融合锁定</span>
+      <button class="modal-close puzzle-close" onclick="closeAsm()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏2：皮影排演小剧场 -->
+<div id="drama-overlay" onclick="if(event.target===this)closeDrama()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">皮影编剧幕次</div>
+    <div class="puzzle-sub">编写多幕剧本 · 拖角色走位 · 开演录制生成可回放剧目</div>
+    <div class="carve-head">
+      <button class="tool-btn" id="drama-s0" onclick="selectDramaStory(0)">满族过大年</button>
+      <button class="tool-btn" id="drama-s1" onclick="selectDramaStory(1)">萨满祈福</button>
+      <span class="task-chip" id="drama-order">出场：武将→文生→旦角</span>
+    </div>
+    <canvas id="drama-canvas" width="640" height="400"></canvas>
+    <div class="puzzle-foot">
+      <div class="stitch-tools">
+        <button class="tool-btn" onclick="resetDramaStage()">重排</button>
+        <button class="tool-btn" id="drama-play-btn" onclick="playDramaShow()">▶ 一键开演</button>
+        <button class="tool-btn" id="drama-rec-btn" onclick="toggleDramaRecord()">🔴 录制短片</button>
+      </div>
+      <button class="modal-close puzzle-close" id="drama-poster-btn" onclick="makeDramaPoster()" style="display:none;">生成短剧海报</button>
+      <button class="modal-close puzzle-close" onclick="closeDrama()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏3：绣纹闯关 -->
+<div id="embgame-overlay" onclick="if(event.target===this)closeEmbGame()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">绣纹闯关 · 满绣针法</div>
+    <div class="puzzle-sub">沿金色轨迹运针 · 躲避游走杂线 · 通关解锁满族高级配色色板</div>
+    <div class="carve-head">
+      <span class="task-chip" id="eg-life">❤❤❤</span>
+      <span class="task-chip" id="eg-step">运针 0%</span>
+      <button class="tool-btn" onclick="initEmbGame()">重开一关</button>
+    </div>
+    <canvas id="eg-canvas" width="520" height="520"></canvas>
+    <div class="puzzle-foot">
+      <span class="flow-tip" id="eg-tip">按住鼠标沿金点运针 · 碰到红色杂线扣一颗心</span>
+      <button class="modal-close puzzle-close" onclick="closeEmbGame()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 数字文创工坊（壁纸/明信片/分享） -->
+<div id="shop-overlay" onclick="if(event.target===this)closeShop()">
+  <div class="puzzle-box">
+    <div class="puzzle-title">数字文创工坊</div>
+    <div class="puzzle-sub">你的创作纹样 · 一键生成手机壁纸 / 民俗明信片 / 二维码分享卡 · 可带走的数字文创</div>
+    <canvas id="shop-preview" width="300" height="200"></canvas>
+    <div class="carve-head">
+      <button class="tool-btn" onclick="makeWallpaper()">📱 手机壁纸导出</button>
+      <button class="tool-btn" onclick="makePostcard()">💌 民俗明信片导出</button>
+      <button class="tool-btn" onclick="makeShareCard()">🔗 二维码分享卡</button>
+    </div>
+    <div class="puzzle-foot">
+      <span class="flow-tip">面向中小学非遗美育课堂 · 支持手机浏览器直接打开分享</span>
+      <button class="modal-close puzzle-close" onclick="closeShop()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏4：纹样寓意图谱 · 解码满族民俗文化密码 -->
+<div id="meaning-overlay" onclick="if(event.target===this)closeMeaning()">
+  <div class="puzzle-box meaning-box">
+    <div class="puzzle-title">纹样寓意图谱</div>
+    <div class="puzzle-sub">满族纹样非装饰 · 是文化密码 · 左侧选纹样 · 右侧连寓意 · 解锁民俗故事与三艺映射</div>
+    <canvas id="meaning-canvas" width="640" height="420"></canvas>
+    <div class="carve-head">
+      <span class="task-chip" id="meaning-prog">已连 0/4</span>
+      <span class="task-chip" id="meaning-story" style="display:none;">民俗故事已解锁</span>
+    </div>
+    <div class="puzzle-foot">
+      <span class="flow-tip" id="meaning-tip">点击左侧纹样 · 再点击右侧寓意 · 连对即解锁民俗故事</span>
+      <button class="modal-close puzzle-close" onclick="closeMeaning()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏5：三艺传承录 · 非遗活态传承的时代抉择 -->
+<div id="chronicle-overlay" onclick="if(event.target===this)closeChronicle()">
+  <div class="puzzle-box chron-box">
+    <div class="puzzle-title">三艺传承录</div>
+    <div class="puzzle-sub">人随艺存 · 艺随人传 · 跨越四时代抉择 · 让传承树枝繁叶茂</div>
+    <div class="leap-stages">
+      <span class="leap-stage on" id="chron-s1">① 清末民初</span>
+      <i class="flow-arrow">➤</i>
+      <span class="leap-stage" id="chron-s2">② 民国战乱</span>
+      <i class="flow-arrow">➤</i>
+      <span class="leap-stage" id="chron-s3">③ 当代复兴</span>
+      <i class="flow-arrow">➤</i>
+      <span class="leap-stage" id="chron-s4">④ 未来传承</span>
+    </div>
+    <canvas id="chron-canvas" width="640" height="420"></canvas>
+    <div class="carve-head">
+      <span class="task-chip" id="chron-era">清末民初 · 1900s</span>
+      <span class="task-chip" id="chron-tree">传承树 0%</span>
+    </div>
+    <div class="puzzle-foot">
+      <span class="flow-tip" id="chron-tip">点击下方选项作出传承抉择 · 正确抉择让传承树成长</span>
+      <button class="modal-close puzzle-close" onclick="closeChronicle()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 古今对照叙事模块 -->
+<div id="compare-overlay" onclick="if(event.target===this)closeCompare()">
+  <div class="puzzle-box compare-box">
+    <div class="puzzle-title" id="cmp-title">古今对照 · 文物数字复刻</div>
+    <div class="puzzle-sub" id="cmp-sub">左滑看真实文物 · 右滑看数字复刻 · 滑块平滑过渡</div>
+    <div class="compare-stage">
+      <canvas id="cmp-canvas-l" width="320" height="320"></canvas>
+      <canvas id="cmp-canvas-r" width="320" height="320" style="clip-path:inset(0 0 0 50%);"></canvas>
+      <input type="range" class="cmp-slider" id="cmp-slider" min="0" max="100" value="50" oninput="updateCompareSlider(this.value)">
+    </div>
+    <div class="puzzle-foot">
+      <span class="flow-tip" id="cmp-desc">数字化保存 · 濒危非遗虚拟复原</span>
+      <button class="modal-close puzzle-close" onclick="closeCompare()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 地域对比 · 辽宁三艺 vs 各地 -->
+<div id="region-overlay" onclick="if(event.target===this)closeRegion()">
+  <div class="puzzle-box region-box">
+    <div class="puzzle-title">地域对比 · 一方水土一方艺</div>
+    <div class="puzzle-sub">辽宁三艺 vs 各地同类 · 逐行点开看独特点</div>
+    <div class="region-tabs" id="region-tabs"></div>
+    <div class="region-cols">
+      <div class="region-col region-col-ln">
+        <div class="region-col-name" id="region-ln-name"></div>
+        <div class="region-col-tag">本省</div>
+      </div>
+      <div class="region-vs">VS</div>
+      <div class="region-col region-col-oth">
+        <div class="region-col-name" id="region-oth-name"></div>
+        <div class="region-col-tag">各地代表</div>
+      </div>
+    </div>
+    <div class="region-rows" id="region-rows"></div>
+    <div class="puzzle-foot">
+      <span class="flow-tip">金色高亮 = 辽宁独有 · 点击展开缘由</span>
+      <button class="modal-close puzzle-close" onclick="closeRegion()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 研学/专家模式切换 -->
+<div id="mode-overlay" onclick="if(event.target===this)closeMode()">
+  <div class="puzzle-box mode-box">
+    <div class="puzzle-title">体验模式选择</div>
+    <div class="puzzle-sub">兼顾普通大众 · 学生研学 · 非遗爱好者</div>
+    <div class="mode-cards">
+      <div class="mode-card" onclick="setAppMode('study')">
+        <div class="mc-icon">📚</div>
+        <b>研学简易模式</b>
+        <small>简化操作 · 引导弹窗 · 适合中小学生</small>
+      </div>
+      <div class="mode-card" onclick="setAppMode('expert')">
+        <div class="mc-icon">🔬</div>
+        <b>专家深度模式</b>
+        <small>开放高级参数 · 自定义纹样配色工艺</small>
+      </div>
+    </div>
+    <div class="a11y-section">
+      <label class="a11y-toggle"><input type="checkbox" id="a11y-largefont" onchange="toggleA11y('largefont')"> 文字放大模式</label>
+      <label class="a11y-toggle"><input type="checkbox" id="a11y-narrate" onchange="toggleA11y('narrate')"> 旁白朗读展品</label>
+      <label class="a11y-toggle"><input type="checkbox" id="a11y-keyboard" onchange="toggleA11y('keyboard')" checked> 键盘Tab全导航</label>
+    </div>
+    <div class="puzzle-foot">
+      <button class="modal-close puzzle-close" onclick="closeMode()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 主页面左下角 · 音乐开关 -->
+<div id="music-float">
+  <button class="ctrl-btn" id="btn-bgm" onclick="toggleBGM()"><span class="icon">♫</span><span id="bgm-label">音乐播放</span></button>
+</div>
+
+<div id="bottom-bar">
+  <!-- 核心玩法：常驻突出，一主两辅流转链 -->
+  <div class="btn-group grp-core">
+    <button class="ctrl-btn core-cta" id="btn-flow" onclick="openFlow()"><span class="icon">❖</span>纹样流转</button>
+    <button class="ctrl-btn ctrl-disabled" id="btn-drama" onclick="playPuppetDrama()" data-tip="请先完成刻绘剪纸或选定一款剪纸纹样"><span class="icon">✥</span>皮影演绎</button>
+    <button class="ctrl-btn ctrl-disabled" id="btn-weave" onclick="playEmbroideryWeave()" data-tip="请先完成刻绘剪纸或选定一款剪纸纹样"><span class="icon">❀</span>刺绣走线</button>
+  </div>
+  <span class="btn-divider" title="核心玩法 / 收纳功能"></span>
+  <!-- 收纳簇：探索 / 工坊 / 游戏 / 更多 -->
+  <div class="btn-group grp-cluster">
+
+    <div class="dropdown">
+      <button class="ctrl-btn drop-trigger" onclick="toggleDrop(this)"><span class="icon">◎</span>探索<span class="dd-arrow">▾</span></button>
+      <div class="dropdown-menu">
+        <button class="ctrl-btn" id="btn-scene" onclick="toggleScene()"><span class="icon">⇄</span>切换展区</button>
+        <button class="ctrl-btn" id="btn-roam" onclick="toggleRoam()"><span class="icon">◎</span>自动漫游</button>
+        <button class="ctrl-btn" onclick="resetView()"><span class="icon">⌂</span>重置视角</button>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="ctrl-btn drop-trigger" onclick="toggleDrop(this)"><span class="icon">✎</span>工坊<span class="dd-arrow">▾</span></button>
+      <div class="dropdown-menu">
+        <button class="ctrl-btn" onclick="openCarve()"><span class="icon">✎</span>刻绘剪纸</button>
+        <button class="ctrl-btn" id="btn-puzzle" onclick="openPuzzle()"><span class="icon">✿</span>拼窗花</button>
+        <button class="ctrl-btn" onclick="openStitch()"><span class="icon">❋</span>纹样拼贴</button>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="ctrl-btn drop-trigger" onclick="toggleDrop(this)"><span class="icon">🕹</span>游戏<span class="dd-arrow">▾</span></button>
+      <div class="dropdown-menu">
+        <button class="ctrl-btn" onclick="openAsm()"><span class="icon">⿻</span>纹样拼图</button>
+        <button class="ctrl-btn" onclick="openDrama()"><span class="icon">🎭</span>皮影小剧场</button>
+        <button class="ctrl-btn" onclick="openEmbGame()"><span class="icon">🪡</span>绣纹闯关</button>
+        <button class="ctrl-btn" onclick="openQuiz()"><span class="icon">◆</span>纹样溯源</button>
+        <button class="ctrl-btn" onclick="openMeaning()"><span class="icon">📜</span>纹样寓意</button>
+        <button class="ctrl-btn" onclick="openChronicle()"><span class="icon">🌳</span>传承录</button>
+        <button class="ctrl-btn" onclick="openCompare()"><span class="icon">📐</span>古今对照</button>
+        <button class="ctrl-btn" onclick="openRegion()"><span class="icon">🌐</span>地域对比</button>
+      </div>
+    </div>
+
+    <div class="dropdown">
+      <button class="ctrl-btn drop-trigger" onclick="toggleDrop(this)"><span class="icon">⚙</span>更多<span class="dd-arrow">▾</span></button>
+      <div class="dropdown-menu">
+        <button class="ctrl-btn" onclick="openLab()"><span class="icon">⚙</span>创新实验室<span id="lab-badge" class="lab-badge">0/16</span></button>
+        <button class="ctrl-btn" onclick="openShop()"><span class="icon">🎁</span>文创工坊</button>
+        <button class="ctrl-btn" onclick="openMode()"><span class="icon">🎛</span>模式切换</button>
+        <button class="ctrl-btn" onclick="showIntro()"><span class="icon">ℹ</span>作品介绍</button>
+        <button class="ctrl-btn" onclick="showJourney()"><span class="icon">🗺</span>我的辽韵旅程</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 底部状态栏 -->
+<footer id="status-bar">
+  <span class="status-item">当前场景: <b id="status-scene">新宾满族剪纸</b></span>
+  <span class="status-sep">|</span>
+  <span class="status-item">FPS: <b id="status-fps">--</b></span>
+  <span class="status-sep">|</span>
+  <span class="status-item">交互模式: <b id="status-mode">可旋转</b></span>
+</footer>
+
+<!-- 提示 -->
+<div class="toast" id="toast"></div>
+
+<!-- 纹样寓意图谱结果展示 -->
+<div id="meaning-result-overlay">
+  <canvas id="meaning-result-canvas" width="800" height="420"></canvas>
+  <div class="meaning-result-close" onclick="document.getElementById('meaning-result-overlay').classList.remove('show')">✕</div>
+</div>
+
+<!-- 皮影小剧场录制按钮（动态注入到drama-overlay） -->
+
+<!-- 非遗总结 · 主题升华弹窗（终章） -->
+<div id="summary-overlay" onclick="if(event.target===this)closeFinale()">
+  <div class="finale-box">
+    <span class="fn-corner tl"></span><span class="fn-corner tr"></span><span class="fn-corner bl"></span><span class="fn-corner br"></span>
+    <div class="fn-halo"></div>
+    <div class="fn-sparkles" id="fn-sparkles"></div>
+    <div class="finale-scroll">
+      <div class="fn-head fn-reveal">
+        <div class="fn-kicker">辽 韵 三 萃 · 终 章 总 结</div>
+        <h2 class="fn-title">一脉辽纹 · 三艺同辉</h2>
+        <div class="fn-sub">一张红纸 · 一张驴皮 · 一根金线 —— 三门非遗，同一个文化母体</div>
+        <div class="fn-orn"><i></i><span>❖</span><i></i></div>
+      </div>
+      <div class="fn-arts fn-reveal">
+        <div class="fn-art">
+          <div class="fa-glyph">✂</div>
+          <b>新宾满族剪纸</b>
+          <span class="fa-role">源 · 纹样母体</span>
+          <p>一剪之巧夺神功，萨满图腾、嬷嬷人、窗花挂签——满汉交融的民俗记忆，皆藏于纸上乾坤。</p>
+        </div>
+        <div class="fn-art">
+          <div class="fa-glyph">🎭</div>
+          <b>岫岩皮影戏</b>
+          <span class="fa-role">转 · 光影叙事</span>
+          <p>一口叙说千古事，双手对舞百万兵——同源纹样在驴皮上镂刻转韵，灯影摇曳处皆是人间戏文。</p>
+        </div>
+        <div class="fn-art">
+          <div class="fa-glyph">🪡</div>
+          <b>辽阳满族刺绣</b>
+          <span class="fa-role">合 · 针线赋彩</span>
+          <p>枕头顶上的花，是姑娘心里的话——盘金打籽、平锁织绣，纹样归根于织物，温情寄于针脚。</p>
+        </div>
+      </div>
+      <div class="fn-chain fn-reveal">
+        <span class="fc-node">纸 · 生纹</span><i class="fc-arrow">➤</i>
+        <span class="fc-node">皮 · 转韵</span><i class="fc-arrow">➤</i>
+        <span class="fc-node">布 · 赋彩</span><i class="fc-arrow">➤</i>
+        <span class="fc-node fc-heart">心 · 传薪</span>
+      </div>
+      <div class="fn-upgrade fn-reveal">
+        <div class="fn-up-title">✦ 主题升华 ✦</div>
+        <div class="fn-up-line">于<b>纹样</b>——我们看见满汉民族千年交往交流交融的活态印记，一纸一皮一布，皆是中华民族多元一体的生动注脚；</div>
+        <div class="fn-up-line">于<b>技艺</b>——我们看见辽河大地生生不息的民间智慧，剪纸为源、皮影转韵、刺绣赋彩，同源三态各美其美、美美与共；</div>
+        <div class="fn-up-line">于<b>传承</b>——我们看见「人随艺存 · 艺随人传」的文化自觉：非遗不在展柜里，而在每一双愿意接过刻刀、针线与影人的手中；</div>
+        <div class="fn-up-line">于<b>未来</b>——我们看见以数字之光点亮非遗之火的时代答卷：指尖交互即文化接力，此刻的你，正是传承链上新的一环。</div>
+        <div class="fn-slogan">让非遗活起来 · 让文脉传下去</div>
+        <div class="fn-slogan-sub">一源三态，万变归宗 —— 这既是辽宁非遗的今天，更是中华文脉生生不息的明天。</div>
+      </div>
+      <div class="fn-seal-row fn-reveal">
+        <div class="fn-seal">辽韵三萃</div>
+        <div class="fn-seal-note">以纹样为舟 · 载辽河文明驶向未来</div>
+      </div>
+    </div>
+    <button class="fn-close" onclick="closeFinale()">掩 卷 · 归 来 仍 是 辽 纹 人</button>
+  </div>
+</div>
+
+<script src="js/script.js?v=5"></script>
+<script src="js/upgrade.js?v=5"></script>
+</body>
+</html>
