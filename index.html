@@ -141,6 +141,7 @@
   <div class="knowledge-card" id="knowledge-card">
     <div class="k-title" id="k-title">非遗档案</div>
     <div class="k-sub" id="k-sub">点击左侧导航或场景中的物件</div>
+    <div class="k-audio"><button class="k-audio-btn" id="k-audio-btn" onclick="toggleNarration()">🔊 语音讲解</button></div>
     <div class="k-body" id="k-body"></div>
   </div>
   <div class="mini-card">
@@ -295,6 +296,18 @@
     <div class="puzzle-foot">
       <button class="tool-btn" onclick="resetThread()">换纹样</button>
       <button class="modal-close puzzle-close" onclick="closeThread()">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 板块视频介绍弹窗 -->
+<div id="video-overlay" onclick="if(event.target===this)closeGroupVideo()">
+  <div class="puzzle-box video-pop">
+    <div class="puzzle-title"><span class="vc-ico">🎬</span>板块视频介绍</div>
+    <div class="puzzle-sub" id="video-pop-sub">视频介绍</div>
+    <video id="group-video" controls preload="metadata" playsinline></video>
+    <div class="puzzle-foot">
+      <button class="modal-close puzzle-close" onclick="closeGroupVideo()">关 闭</button>
     </div>
   </div>
 </div>
@@ -630,6 +643,7 @@
     <button class="ctrl-btn core-cta" id="btn-flow" onclick="openFlow()"><span class="icon">❖</span>纹样流转</button>
     <button class="ctrl-btn ctrl-disabled" id="btn-drama" onclick="playPuppetDrama()" data-tip="请先完成刻绘剪纸或选定一款剪纸纹样"><span class="icon">✥</span>皮影演绎</button>
     <button class="ctrl-btn ctrl-disabled" id="btn-weave" onclick="playEmbroideryWeave()" data-tip="请先完成刻绘剪纸或选定一款剪纸纹样"><span class="icon">❀</span>刺绣走线</button>
+    <button class="ctrl-btn ctrl-video" onclick="openGroupVideo()"><span class="icon">🎬</span>视频介绍</button>
   </div>
   <span class="btn-divider" title="核心玩法 / 收纳功能"></span>
   <!-- 收纳簇：探索 / 工坊 / 游戏 / 更多 -->
