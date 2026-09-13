@@ -128,8 +128,8 @@
 
   <!-- 头部（白色绒球） -->
   <circle cx="124" cy="66" r="34" fill="url(#headG)" stroke="#d3dbe2" stroke-width="2"/>
-  <!-- 后颈黑色延入头部 -->
-  <path d="M96 58 C100 80 116 92 136 92 C122 86 110 74 104 58 Z" fill="url(#blackG)"/>
+  <!-- 喉部黑羽（与黑颈相接，仅在头下方，不遮脸） -->
+  <path d="M104 88 C112 98 130 100 142 94 C128 94 112 88 104 80 Z" fill="url(#blackG)"/>
   <!-- 红顶（丹顶） -->
   <path d="M98 50 C100 32 118 24 134 28 C148 32 156 42 156 52
            C142 44 118 44 98 50 Z" fill="url(#crownG)"/>
@@ -143,8 +143,8 @@
   <circle cx="134.5" cy="65" r="6.4" fill="#20242a"/>
   <circle cx="137" cy="62" r="2.1" fill="#fff"/>
   <circle cx="132.5" cy="67.5" r="1" fill="#fff" opacity=".8"/>
-  <!-- 睫毛 -->
-  <path d="M139 57 q4 -3 7 -2" fill="none" stroke="#20242a" stroke-width="2" stroke-linecap="round"/>
+  <!-- 弯眉（笑意） -->
+  <path d="M138 55 q4.5 -4 9 -1" fill="none" stroke="#20242a" stroke-width="2" stroke-linecap="round"/>
 
   <!-- 长喙 -->
   <path d="M146 66 L190 60 L148 72 Z" fill="url(#beakG)" stroke="#8c8266" stroke-width="1.2"/>
