@@ -1870,6 +1870,7 @@ function openFlipPanel(){
   if(def && def.userData.front && def.userData.front.image && fi) fi.src = def.userData.front.image.toDataURL();
   if(def && def.userData.back && def.userData.back.image && bi) bi.src = def.userData.back.image.toDataURL();
   panel.classList.add('on'); panel.classList.remove('focus'); setTimeout(applyFlip, 60);
+  updatePillowBtn();
 }
 // 隐藏翻面卡并复位展品（不改动左/右面板的收起状态）
 function hideFlipPanel(){
@@ -1882,6 +1883,7 @@ function hideFlipPanel(){
   }
   FLIP.exhibit = null;
   panel.classList.remove('on','focus');
+  updatePillowBtn();
 }
 // 进入/离开刺绣展厅时：按右侧文字是否收起决定枕顶卡显隐；不重置左右面板收起状态
 function toggleFlipPanel(name){
@@ -1892,6 +1894,21 @@ function toggleFlipPanel(name){
   const textCollapsed = rp ? rp.classList.contains('collapsed') : false;
   if(textCollapsed) openFlipPanel(); else hideFlipPanel();
 }
+
+// ===== 刺绣展区专属 · 双面枕顶快捷按钮（移动端 · 仅刺绣展厅出现） =====
+function updatePillowBtn(){
+  const btn = document.getElementById('pillow-btn'); if(!btn) return;
+  const mobile = window.innerWidth <= 960;
+  const inEmb = STATE && STATE.currentScene === 'emb';
+  const flipOpen = typeof FLIP !== 'undefined' && FLIP && FLIP.open;
+  btn.classList.toggle('show', !!(mobile && inEmb && !flipOpen));
+}
+function pillowBtnToggle(){
+  if(typeof FLIP !== 'undefined' && FLIP && FLIP.open){ closeFlip(); }
+  else if(typeof openFlipPanel === 'function'){ openFlipPanel(); }
+  updatePillowBtn();
+}
+window.addEventListener('resize', updatePillowBtn);
 
 // 逐帧：枕顶浮动 + 角度趋近 + 同步 CSS卡
 function updateDoublePillow(delta, elapsed){
@@ -3075,6 +3092,7 @@ function switchScene(name, cb){
     paperSceneGroup.visible = (name === 'paper');
     embSceneGroup.visible = (name === 'emb');
     toggleFlipPanel(name); // 混合交互：双面枕顶翻面卡随展厅显隐
+    updatePillowBtn();     // 刺绣展区专属枕顶按钮随展厅显隐
     applyParticleTheme(name);
     document.getElementById('status-scene').textContent = data.name;
     setOverlay(data.name, data.tagline || data.sub || ''); // 场景切换时同步顶部标题浮层
