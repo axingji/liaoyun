@@ -1835,7 +1835,20 @@ function toggleRightPanel(force){
   if(txt) txt.textContent = collapsed ? '展开' : '收起';
   // 互斥：刺绣展厅内，文字收起→枕顶出现；文字展开→枕顶收起
   if(collapsed){ if(STATE.currentScene === 'emb') openFlipPanel(); }
-  else if(FLIP.open) closeFlip();
+  else{
+    if(FLIP.open) closeFlip();
+    // 三者互斥：展开右侧知识框 → 鹤小雅互动收起
+    if(typeof window.heGuideCollapse === 'function') window.heGuideCollapse();
+  }
+}
+// 三者互斥：安全收起右侧知识框（不触发枕顶联动），移动端滑出面板一并关闭
+function collapseRightPanelSafe(){
+  const panel = document.getElementById('right-panel');
+  if(!panel) return;
+  panel.classList.add('collapsed');
+  panel.classList.remove('open');
+  const txt = document.getElementById('rc-text');
+  if(txt) txt.textContent = '展开';
 }
 function closeFlip(){
   hideFlipPanel();
@@ -1846,6 +1859,9 @@ else initFlipPanel();
 // 显示默认双面枕顶卡（默认跟随第一个刺绣展品，正反面与之对应，避免固定福字封面）
 function openFlipPanel(){
   const panel = document.getElementById('flip-panel'); if(!panel) return;
+  // 三者互斥：打开枕顶 → 右侧知识框与鹤小雅互动一并收起
+  collapseRightPanelSafe();
+  if(typeof window.heGuideCollapse === 'function') window.heGuideCollapse();
   FLIP.open = true; FLIP.cur = 0; FLIP.exhibit = null; rotateTo(0);
   const def = (typeof embObjects !== 'undefined' ? embObjects : []).find(e=>e.userData && e.userData.type === 'embroidery');
   const titleEl = document.getElementById('fp-title');
@@ -3125,7 +3141,11 @@ function setMode(text){
 // ===== 移动端面板开关 =====
 function togglePanel(side){
   const panel = document.getElementById(side === 'left' ? 'left-panel' : 'right-panel');
-  if(panel) panel.classList.toggle('open');
+  if(!panel) return;
+  const wasOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  // 三者互斥：移动端点开右侧知识框 → 鹤小雅互动收起
+  if(side === 'right' && !wasOpen && typeof window.heGuideCollapse === 'function') window.heGuideCollapse();
 }
 
 function closePanelsOnMobile(){

@@ -4112,3 +4112,407 @@ function toggleRegionRow(row){
   row.classList.toggle('expanded');
 }
 
+/* ============================================================
+   ⑭ 仙鹤导览员「鹤小雅」
+   · 常驻页面，随展区切换解说三大非遗（解说文案复用 SCENE_DATA 网页原文）
+   · 仙鹤左右各一枚游戏按钮：先弹玩法讲解，再进入游戏
+   · 「全部玩法」帖汇总所有游戏的玩法介绍
+   · 逛完三展区 → 解锁终章徽章 → 引导总结弹窗 → 传承誓约
+   ============================================================ */
+(function(){
+  var guide = document.getElementById('he-guide');
+  if(!guide) return;
+  var $ = function(id){ return document.getElementById(id); };
+  var bubble=$('he-bubble'), gamesPanel=$('he-games'), body=$('he-b-body'),
+      greet=$('he-b-greet'), tag=$('he-b-tag'), foot=$('he-b-foot'),
+      voiceBtn=$('he-voice-btn'), finBadge=$('he-fin-badge');
+
+  var G = { scene:'paper', visited:{paper:true,puppet:false,emb:false}, revealed:false,
+            mode:'talk', pending:null, audio:null, audioList:null, audioIdx:0 };
+  var SCENE_LABEL = {paper:'剪纸', puppet:'皮影', emb:'刺绣'};
+  var SCENE_TAG = {paper:'新宾满族剪纸', puppet:'岫岩皮影戏', emb:'辽阳满族刺绣'};
+  var GREETS = {
+    paper:'嗨，我是鹤小雅，「辽韵三萃」的导览员！辽宁有三门绝活——剪纸、皮影、刺绣，它们其实是同一种纹样的三生三世。先从「纹样母体」新宾满族剪纸看起吧。',
+    puppet:'一张纸上的纹样，怎么就活了起来？随我到岫岩皮影戏台——同源纹样被刻上驴皮，灯光一打，便演尽了千年故事。',
+    emb:'最后一站，纹样要在织物上安家。辽阳满绣的姑娘们先剪纸样、再飞针走线，看这根金线如何为纹样赋彩。'
+  };
+  var FIN_GREET = '三艺已览遍，一纸生纹、一皮转韵、一布赋彩。随我翻开终章，看看我们这代人，能为传承做些什么——';
+
+  /* 每个展区仙鹤左右两枚主推游戏（点击先看玩法讲解） */
+  var SCENE_GAMES = {
+    paper:[
+      {ico:'✎', name:'刻绘剪纸', fn:'openCarve', tip:'鼠标为刻刀 · 沿纹镂空',
+        steps:['鼠标化作刻刀，按住左键沿黑色纹样滑动镂空。','刻痕超出红色引导线会扣分，满分 100 分。','可在「萨满纹样」「福字年俗」两套底稿间切换。','刻成的纹样会同步到刺绣展厅，成为绣纹母本。']},
+      {ico:'✿', name:'拼窗花', fn:'openPuzzle', tip:'折叠走剪 · 展开成花',
+        steps:['先选择纸张的折叠方式。','沿金色轨迹走剪镂空，共需拼合 7 片。','剪完轻轻展开，就是一幅完整满族窗花。','你的作品还会贴上展厅的窗花墙。']}
+    ],
+    puppet:[
+      {ico:'💡', name:'皮影光影叙事', fn:'openManip', tip:'拖动光源 · 编排默剧',
+        steps:['左右拖动光源，控制幕上影子的虚与实。','依次完成「① 抬手」「② 转身」两段默剧动作。','动作到位即可点亮任务签。','全部完成，领取专属数字纪念卡。']},
+      {ico:'🎭', name:'皮影小剧场', fn:'openDrama', tip:'选剧走位 · 一键开演',
+        steps:['选择剧目：满族过大年 或 萨满祈福。','拖动武将、文生、旦角到幕上排布出场次序。','点「一键开演」自动演出，还可录制短片。','收戏后生成一张属于你的短剧海报。']}
+    ],
+    emb:[
+      {ico:'🧵', name:'走线工坊', fn:'openThread', tip:'沿点走线 · 绣成枕顶',
+        steps:['沿金色引导点移动鼠标，虚拟针线随轨迹铺出绣线。','走完一整只枕头顶，绣品即告完成。','可保存绣品，也可一键同步到皮影人物服饰。','这就是剪纸纹样在织物上的最终落地。']},
+      {ico:'🪡', name:'绣纹闯关', fn:'openEmbGame', tip:'运针躲线 · 三颗心通关',
+        steps:['按住鼠标沿金色轨迹运针前行。','躲避游走的红色杂线，碰到一次扣一颗心，共三颗心。','坚持运针到终点即通关。','通关解锁满族高级配色色板。']}
+    ]
+  };
+
+  /* 全部玩法帖（覆盖页面全部游戏/工坊） */
+  var ALL_GAMES = [
+    {group:'新宾满族剪纸 · 纸上生纹'},
+    {ico:'✎', name:'刻绘剪纸', fn:'openCarve', how:'鼠标为刻刀沿黑色纹样镂空，刻出红线外扣分，刻成纹样同步刺绣展厅。'},
+    {ico:'✿', name:'拼窗花', fn:'openPuzzle', how:'选择折叠方式，沿金线走剪镂空，7 片拼合展开成满族窗花。'},
+    {group:'岫岩皮影 · 光影转韵'},
+    {ico:'💡', name:'皮影光影叙事', fn:'openManip', how:'拖动光源角度控制影子虚实，完成抬手、转身默剧动作序列。'},
+    {ico:'🎭', name:'皮影小剧场', fn:'openDrama', how:'选剧目、拖角色走位，一键开演，可录制短片并生成海报。'},
+    {group:'辽阳满族刺绣 · 针线赋彩'},
+    {ico:'🧵', name:'满族刺绣走线工坊', fn:'openThread', how:'沿金色引导点移动鼠标铺出绣线，绣完枕头顶并可同步皮影服饰。'},
+    {ico:'🪡', name:'绣纹闯关', fn:'openEmbGame', how:'沿金色轨迹运针、躲开红色杂线，三颗心通关解锁高级色板。'},
+    {ico:'❋', name:'满绣针法模拟', fn:'openStitch', how:'选平绣/锁绣/盘金/打籽针法，在绣布上拼贴纹样并生成文创卡片。'},
+    {group:'三艺联动 · 通关探索'},
+    {ico:'❖', name:'纹样流转（核心玩法）', fn:'openFlow', how:'选定剪纸母题，一键流转映射皮影皮偶与刺绣绣布，见证一源三态。'},
+    {ico:'⿻', name:'纹样基因演化', fn:'openAsm', how:'拖动 3×3 悬浮碎片复原纹样，解锁从上古图腾到当代国潮的时间轴。'},
+    {ico:'◆', name:'纹样溯源挑战', fn:'openQuiz', how:'拖动纹样卡片到它最早起源的展区，共 6 题，验证剪纸是纹样母源。'},
+    {ico:'📜', name:'纹样寓意图谱', fn:'openMeaning', how:'左侧纹样连右侧寓意，连对 4 组即解锁满族民俗故事。'},
+    {ico:'🌳', name:'三艺传承录', fn:'openChronicle', how:'跨越四个时代作出传承抉择，正确抉择让传承树枝繁叶茂。'},
+    {ico:'📐', name:'古今对照', fn:'openCompare', how:'拖动滑块在真实文物与数字复刻间平滑对比，看濒危非遗虚拟复原。'},
+    {ico:'🌐', name:'地域对比', fn:'openRegion', how:'逐行展开辽宁三艺与各地同类技艺的差异，金色高亮即为辽宁独有。'}
+  ];
+
+  /* ---------- 渲染：非遗解说（文案取自 SCENE_DATA intro 原文） ---------- */
+  function renderTalk(scene){
+    G.scene = scene; G.mode='talk'; G.pending=null;
+    var data = (typeof SCENE_DATA!=='undefined') ? SCENE_DATA[scene] : null;
+    showBubble();
+    tag.textContent = SCENE_TAG[scene] || (data && data.name) || '';
+    greet.textContent = GREETS[scene] || '';
+    body.innerHTML = data
+      ? '<h4>'+data.intro.title+'<small style="font-weight:400;font-size:11px;color:#9c6a44;margin-left:8px;">'+data.intro.sub+'</small></h4>' + data.intro.body
+      : '<p>解说文案筹备中……</p>';
+    body.scrollTop = 0;
+    voiceBtn.style.display = '';
+    renderFoot(scene);
+    syncOrbs(scene);
+  }
+  /* 仅重绘底部按钮区（终章解锁时不覆盖寄语） */
+  function renderFoot(scene){
+    scene = scene || G.scene;
+    /* 展区切换圆点 + 终章入口 */
+    var allDone = G.visited.paper && G.visited.puppet && G.visited.emb;
+    var html = '<span class="he-scene-dots">';
+    ['paper','puppet','emb'].forEach(function(k){
+      html += '<button class="he-dot'+(k===scene?' on':'')+(G.visited[k]?' done':'')+'" type="button" data-scene="'+k+'">'+SCENE_LABEL[k]+'</button>';
+    });
+    html += '</span>';
+    if(allDone){
+      html += '<button class="he-fin-cta" id="he-fin-go" type="button">✦ 终章总结 · 接过传承</button>';
+    }
+    foot.innerHTML = html;
+    var dots = foot.querySelectorAll('.he-dot');
+    dots.forEach(function(d){
+      d.onclick = function(){
+        stopHeVoice();
+        if(typeof gotoScene==='function') gotoScene(d.getAttribute('data-scene'));
+      };
+    });
+    var finGo = $('he-fin-go');
+    if(finGo) finGo.onclick = function(){ if(typeof openFinale==='function') openFinale(); };
+  }
+  function renderFootFinale(){ renderFoot(G.scene); }
+
+  /* ---------- 渲染：游戏玩法讲解 ---------- */
+  function renderGame(side){
+    var g = SCENE_GAMES[G.scene][side];
+    G.mode='game'; G.pending=g;
+    showBubble();
+    tag.textContent = '玩法详解 · '+g.name;
+    greet.textContent = '想玩「'+g.name+'」？不急，鹤小雅先给你讲讲怎么玩——';
+    var html = '<h4>'+g.ico+' '+g.name+'<small style="font-weight:400;font-size:11px;color:#9c6a44;margin-left:8px;">'+g.tip+'</small></h4>';
+    html += '<ul class="he-steps">';
+    g.steps.forEach(function(s,i){ html += '<li><i>'+(i+1)+'</i>'+s+'</li>'; });
+    html += '</ul>';
+    body.innerHTML = html;
+    body.scrollTop = 0;
+    voiceBtn.style.display='none';
+    foot.innerHTML =
+      '<button class="he-back-talk" id="he-game-back" type="button">‹ 回来听非遗解说</button>' +
+      '<button class="he-go-game" id="he-game-go" type="button">▶ 进入'+g.name+'</button>';
+    $('he-game-back').onclick = function(){ renderTalk(G.scene); };
+    $('he-game-go').onclick = function(){
+      if(typeof window[g.fn]==='function'){ window[g.fn](); }
+      else if(typeof showToast==='function') showToast('玩法即将开放');
+    };
+  }
+
+  /* ---------- 左右游戏按钮随展区换名 ---------- */
+  function syncOrbs(scene){
+    var pair = SCENE_GAMES[scene];
+    $('he-orb-l-ico').textContent = pair[0].ico;
+    $('he-orb-l-name').textContent = pair[0].name;
+    $('he-orb-r-ico').textContent = pair[1].ico;
+    $('he-orb-r-name').textContent = pair[1].name;
+  }
+
+  /* ---------- 三者互斥：鹤小雅互动 ⇄ 右侧知识框 ⇄ 枕顶翻面卡 ---------- */
+  function collapseKnowledgeAndFlip(){
+    if(typeof collapseRightPanelSafe==='function') collapseRightPanelSafe();
+    else{
+      var rp = document.getElementById('right-panel');
+      if(rp){ rp.classList.add('collapsed'); rp.classList.remove('open'); }
+    }
+    if(typeof FLIP!=='undefined' && FLIP && FLIP.open && typeof hideFlipPanel==='function'){
+      hideFlipPanel();
+    }
+  }
+  /* 全局：收起鹤小雅互动（供知识框/枕顶打开时互斥调用） */
+  window.heGuideCollapse = function(){
+    bubble.classList.add('hide');
+    gamesPanel.hidden = true; gamesPanel.classList.remove('show');
+    guide.classList.remove('games-open');
+    stopHeVoice();
+  };
+
+  function showBubble(){
+    gamesPanel.hidden = true; gamesPanel.classList.remove('show');
+    guide.classList.remove('games-open');
+    bubble.classList.remove('hide');
+    /* 三者互斥：鹤小雅解说/玩法讲解打开 → 收起右侧知识框与枕顶 */
+    collapseKnowledgeAndFlip();
+  }
+
+  /* ---------- 全部玩法面板 ---------- */
+  function buildGamesPanel(){
+    var html='';
+    ALL_GAMES.forEach(function(it){
+      if(it.group){ html += '<span class="he-g-group">'+it.group+'</span>'; return; }
+      html += '<button class="he-g-item" type="button" data-fn="'+it.fn+'">' +
+        '<span class="gi-ico">'+it.ico+'</span>' +
+        '<span class="gi-txt"><span class="gi-name">'+it.name+'</span>' +
+        '<span class="gi-how">'+it.how+'</span></span>' +
+        '<span class="gi-go">进入 ›</span></button>';
+    });
+    $('he-g-list').innerHTML = html;
+    $('he-g-list').querySelectorAll('.he-g-item').forEach(function(el){
+      el.onclick = function(){
+        var fn = el.getAttribute('data-fn');
+        if(typeof window[fn]==='function') window[fn]();
+      };
+    });
+  }
+  function toggleGamesPanel(open){
+    var willOpen = open!==undefined ? open : gamesPanel.hidden;
+    if(willOpen){
+      gamesPanel.hidden=false; gamesPanel.classList.add('show');
+      bubble.classList.add('hide'); guide.classList.add('games-open');
+      collapseKnowledgeAndFlip();
+    }else{
+      gamesPanel.hidden=true; gamesPanel.classList.remove('show');
+      bubble.classList.remove('hide'); guide.classList.remove('games-open');
+    }
+  }
+
+  /* ---------- 仙鹤语音讲解（优先站内录音，无录音用 TTS 兜底） ---------- */
+  function stopHeVoice(){
+    if(G.audio){ try{G.audio.pause();}catch(e){} G.audio=null; }
+    if('speechSynthesis' in window) window.speechSynthesis.cancel();
+    G.audioList=null;
+    guide.classList.remove('speaking');
+    voiceBtn.classList.remove('speaking');
+  }
+  function speakCurrent(){
+    stopHeVoice();
+    var data = (typeof SCENE_DATA!=='undefined') ? SCENE_DATA[G.scene] : null;
+    if(!data) return;
+    var srcs = (typeof VOICE_AUDIO!=='undefined' && VOICE_AUDIO[data.intro.title])
+      ? [].concat(VOICE_AUDIO[data.intro.title]) : null;
+    voiceBtn.classList.add('speaking'); guide.classList.add('speaking');
+    if(srcs && srcs.length){
+      G.audioList = srcs; G.audioIdx = 0;
+      playNext();
+    }else if('speechSynthesis' in window){
+      var tmp=document.createElement('div'); tmp.innerHTML=data.intro.body;
+      var text=data.intro.title+'。'+tmp.innerText.replace(/\s+/g,' ');
+      var u=new SpeechSynthesisUtterance(text);
+      u.lang='zh-CN'; u.rate=0.95;
+      var voices=window.speechSynthesis.getVoices();
+      var v=voices.filter(function(x){return /zh|Chinese/i.test(x.lang+x.name);})[0];
+      if(v)u.voice=v;
+      u.onend=u.onerror=function(){ guide.classList.remove('speaking'); voiceBtn.classList.remove('speaking'); };
+      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    }else{
+      guide.classList.remove('speaking'); voiceBtn.classList.remove('speaking');
+    }
+  }
+  function playNext(){
+    if(!G.audioList){ return; }
+    if(G.audioIdx >= G.audioList.length){
+      stopHeVoice(); return;
+    }
+    var a = new Audio(G.audioList[G.audioIdx++]);
+    G.audio = a;
+    a.onended = function(){ G.audio=null; playNext(); };
+    a.onerror = function(){ stopHeVoice(); };
+    a.play().catch(function(){ stopHeVoice(); });
+  }
+
+  /* ---------- 终章解锁 ---------- */
+  function checkFinaleUnlock(justUnlocked){
+    var all = G.visited.paper && G.visited.puppet && G.visited.emb;
+    if(all){
+      finBadge.classList.add('unlocked');
+      if(justUnlocked){
+        guide.classList.add('happy');
+        setTimeout(function(){ guide.classList.remove('happy'); }, 2000);
+        greet.textContent = FIN_GREET;
+        if(typeof showToast==='function') showToast('鹤小雅：三门非遗都逛遍啦 ✦ 终章已为你点亮');
+        if(G.mode==='talk') renderFootFinale();
+      }
+    }else{
+      finBadge.classList.remove('unlocked');
+    }
+  }
+
+  /* ---------- 展区切换钩子：跟随解说每一项非遗 ---------- */
+  if(typeof window.switchScene==='function'){
+    var __origSwitch = window.switchScene;
+    window.switchScene = function(name, cb){
+      return __origSwitch(name, function(){
+        try{ onGuideScene(name); }catch(e){ console.warn('鹤小雅导览异常', e); }
+        if(cb) return cb();
+      });
+    };
+  }
+  function onGuideScene(name){
+    if(!SCENE_GAMES[name]) return;
+    var first = !G.visited[name];
+    G.visited[name] = true;
+    stopHeVoice();
+    renderTalk(name);
+    checkFinaleUnlock(first && G.visited.paper && G.visited.puppet && G.visited.emb);
+  }
+
+  /* ---------- 交互绑定 ---------- */
+  $('he-b-close').onclick = function(){ bubble.classList.add('hide'); };
+  $('he-crane').onclick = function(){
+    stopHeVoice();
+    if(!gamesPanel.hidden){ toggleGamesPanel(false); return; }
+    if(bubble.classList.contains('hide') || G.mode!=='talk'){ renderTalk(G.scene); }
+    else{ bubble.classList.add('hide'); }
+  };
+  voiceBtn.onclick = function(e){
+    e.stopPropagation();
+    if(voiceBtn.classList.contains('speaking')) stopHeVoice();
+    else speakCurrent();
+  };
+  function bindOrb(id, side){
+    $(id).onclick = function(){
+      stopHeVoice();
+      var orb = $(id);
+      orb.classList.remove('pulse'); void orb.offsetWidth; orb.classList.add('pulse');
+      renderGame(side);
+    };
+  }
+  bindOrb('he-orb-l',0); bindOrb('he-orb-r',1);
+  $('he-games-btn').onclick = function(){ toggleGamesPanel(); };
+  $('he-g-back').onclick = function(){ toggleGamesPanel(false); };
+  finBadge.onclick = function(e){
+    e.stopPropagation();
+    if(finBadge.classList.contains('unlocked')){
+      if(typeof openFinale==='function') openFinale();
+    }else{
+      var left=[]; ['paper','puppet','emb'].forEach(function(k){ if(!G.visited[k]) left.push(SCENE_TAG[k]); });
+      if(typeof showToast==='function') showToast('鹤小雅：再随我看看「'+left.join('、')+'」，终章就会开启');
+      guide.classList.remove('happy'); void guide.offsetWidth; guide.classList.add('happy');
+      setTimeout(function(){ guide.classList.remove('happy'); }, 1900);
+    }
+  };
+
+  /* ---------- 图片加载失败 → 回退实时生成接口 ---------- */
+  var craneImg = $('he-crane-img');
+  craneImg.addEventListener('error', function(){
+    if(craneImg.getAttribute('data-fb')) return;
+    craneImg.setAttribute('data-fb','1');
+    var p='cute 3D render cartoon red-crowned crane mascot, red crown white body black neck, waving wing, Chinese Manchu embroidered vest, white background';
+    craneImg.src='https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt='+encodeURIComponent(p)+'&image_size=square_hd';
+  }, {once:true});
+
+  /* ---------- 开场动画结束后仙鹤登场 ---------- */
+  function revealGuide(){
+    if(G.revealed) return; G.revealed=true;
+    guide.classList.add('show');
+    buildGamesPanel();
+    syncOrbs('paper');            // 游戏按钮预置剪纸展区玩法
+    bubble.classList.add('hide'); // 初始状态：只显示右侧知识框，鹤小雅收起（点鹤小雅再开始解说）
+  }
+  var opening = document.getElementById('opening-overlay');
+  if(opening){
+    var mo = new MutationObserver(function(){
+      if(!opening.classList.contains('show') && opening.classList.contains('leave')){
+        mo.disconnect(); setTimeout(revealGuide, 650);
+      }
+    });
+    mo.observe(opening,{attributes:true,attributeFilter:['class']});
+    setTimeout(revealGuide, 16000); // 兜底
+  }else{
+    revealGuide();
+  }
+
+  /* ============================================================
+     终章 · 传承誓约（钤印 + 鎏金 + 编号，引导用户把非遗传下去）
+     ============================================================ */
+  var PLEDGE_KEY='lysc_pledge_serial';
+  var pledgeBox=$('fn-pledge'), pledgeBtn=$('fn-pledge-btn'), pledgeNum=$('fn-pledge-num');
+  function pledgeSerial(){
+    try{ return parseInt(localStorage.getItem(PLEDGE_KEY)||'0',10)||0; }catch(e){ return 0; }
+  }
+  function refreshPledge(){
+    if(!pledgeBox) return;
+    var n=pledgeSerial();
+    if(n>0){ pledgeBox.classList.add('sealed'); }
+    else if(pledgeNum){ pledgeNum.textContent='???'; }
+  }
+  if(pledgeBtn){
+    refreshPledge();
+    pledgeBtn.onclick=function(){
+      if(pledgeBox.classList.contains('sealed')) return;
+      var n;
+      try{
+        n = parseInt(localStorage.getItem(PLEDGE_KEY)||'0',10)||0;
+        n = n>0 ? n : 1286 + Math.floor(Math.random()*7000);
+        n = n + 1;
+        localStorage.setItem(PLEDGE_KEY, String(n));
+      }catch(e){ n = 1286 + Math.floor(Math.random()*7000); }
+      pledgeNum.textContent = n;
+      pledgeBox.classList.add('sealed');
+      var gf=$('gold-flash');
+      if(gf){ gf.classList.remove('boom'); void gf.offsetWidth; gf.classList.add('boom'); }
+      if(typeof showToast==='function') showToast('誓约已钤印 · 传承有我，辽纹不息');
+    };
+    /* 每次打开终章：若已誓约，保持钤印态 */
+    if(typeof window.openFinale==='function'){
+      var __openFin = window.openFinale;
+      window.openFinale = function(){
+        __openFin();
+        refreshPledge();
+      };
+    }
+    if(typeof window.closeFinale==='function'){
+      var __closeFin = window.closeFinale;
+      window.closeFinale = function(){
+        __closeFin();
+        if(G.revealed && pledgeSerial()>0 && bubble){
+          greet.textContent='誓约已钤印，从今往后你就是辽纹传薪人。一剪一影一针线，愿你带走它，也把它讲给更多人听——';
+          body.innerHTML='<h4>✦ 传承有我</h4><p>人随艺存，艺随人传。<span class="highlight">非遗不在展柜里</span>，而在每一双愿意接过刻刀、针线与影人的手中。</p><p>把你做的窗花、演的皮影、绣的枕顶分享给身边人吧——<b>你此刻的指尖，就是它的明天。</b></p>';
+          foot.innerHTML='<button class="he-fin-cta" id="he-fin-replay" type="button">↺ 再看一遍终章总结</button>';
+          var rp=$('he-fin-replay'); if(rp) rp.onclick=function(){ if(typeof openFinale==='function') openFinale(); };
+          showBubble();
+        }
+      };
+    }
+  }
+  console.log('[仙鹤导览员] 鹤小雅已就位 · 三非遗解说/玩法讲解/终章传承');
+})();
+

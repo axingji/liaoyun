@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>辽韵三萃——辽宁皮影、满族剪纸与满族刺绣沉浸式3D交互H5</title>
 <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="css/style.css?v=10">
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js" integrity="sha384-vV17nr/rMaJqmeZkFUzXLpHdQ+ME5QHKdydaqqN+3Ga39RJlNrTatJxHwGV4ml2C" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -767,12 +767,79 @@
         <div class="fn-seal">辽韵三萃</div>
         <div class="fn-seal-note">以纹样为舟 · 载辽河文明驶向未来</div>
       </div>
+      <!-- 传承誓约 · 引导用户接棒传承 -->
+      <div class="fn-pledge fn-reveal" id="fn-pledge">
+        <div class="fn-pledge-tip">非遗不在展柜里，而在每一双愿意接过刻刀、针线与影人的手中。</div>
+        <button class="fn-pledge-btn" id="fn-pledge-btn" type="button">
+          <span class="fpb-ico">✦</span><span class="fpb-txt">我愿接过刻刀、针线与影人 · 做辽纹第 <b id="fn-pledge-num">???</b> 位传薪人</span>
+        </button>
+        <div class="fn-pledge-done" id="fn-pledge-done">
+          <span class="fpd-seal">传承有我</span>
+          <p>一剪一影一针线，皆有来处；<br>愿你我之手，让辽纹生生不息。</p>
+        </div>
+      </div>
     </div>
     <button class="fn-close" onclick="closeFinale()">掩 卷 · 归 来 仍 是 辽 纹 人</button>
   </div>
 </div>
 
-<script src="js/script.js?v=5"></script>
-<script src="js/upgrade.js?v=5"></script>
+<!-- 仙鹤导览员（常驻页面 · 解说三非遗 · 引导游戏玩法 · 终章传承） -->
+<div id="he-guide" aria-label="仙鹤导览员鹤小雅">
+  <div class="he-stack">
+    <!-- 解说 / 玩法气泡 -->
+    <section class="he-bubble" id="he-bubble">
+      <span class="he-corner he-corner-tl"></span>
+      <span class="he-corner he-corner-tr"></span>
+      <span class="he-corner he-corner-bl"></span>
+      <span class="he-corner he-corner-br"></span>
+      <button class="he-b-close" id="he-b-close" type="button" title="收起解说">×</button>
+      <header class="he-b-head">
+        <span class="he-b-name">鹤小雅</span>
+        <span class="he-b-tag" id="he-b-tag">新宾满族剪纸</span>
+        <button class="he-b-voice" id="he-voice-btn" type="button" title="听仙鹤语音讲解">
+          <span class="he-voice-ico">🔊</span><span class="he-voice-txt">听讲解</span>
+        </button>
+      </header>
+      <div class="he-b-greet" id="he-b-greet"></div>
+      <div class="he-b-body" id="he-b-body"></div>
+      <footer class="he-b-foot" id="he-b-foot"></footer>
+    </section>
+    <!-- 全部玩法面板 -->
+    <section class="he-games" id="he-games" hidden>
+      <header class="he-g-head">
+        <b>🎮 鹤小雅的玩法帖</b>
+        <button class="he-g-back" id="he-g-back" type="button">‹ 返回解说</button>
+      </header>
+      <div class="he-g-scroll" id="he-g-list"></div>
+    </section>
+  </div>
+  <!-- 导览坞：左游戏 · 仙鹤 · 右游戏 -->
+  <div class="he-dock" id="he-dock">
+    <button class="he-orb he-orb-l" id="he-orb-l" type="button">
+      <span class="orb-ico" id="he-orb-l-ico">✎</span>
+      <span class="orb-name" id="he-orb-l-name">刻绘剪纸</span>
+      <small class="orb-hint">玩法</small>
+    </button>
+    <div class="he-crane-wrap">
+      <button class="he-crane" id="he-crane" type="button" title="鹤小雅为你解说本展区非遗">
+        <img id="he-crane-img" src="imgs/he-guide.svg" alt="仙鹤导览员鹤小雅">
+        <span class="he-halo"></span>
+        <span class="he-fin-badge" id="he-fin-badge" title="逛完三展区后开启终章">✦<i>终章</i></span>
+      </button>
+      <span class="he-crane-plate">鹤小雅 · 非遗导览</span>
+    </div>
+    <button class="he-orb he-orb-r" id="he-orb-r" type="button">
+      <span class="orb-ico" id="he-orb-r-ico">✿</span>
+      <span class="orb-name" id="he-orb-r-name">拼窗花</span>
+      <small class="orb-hint">玩法</small>
+    </button>
+    <button class="he-games-btn" id="he-games-btn" type="button" title="全部游戏玩法">
+      <span>🎮</span><i>全部玩法</i>
+    </button>
+  </div>
+</div>
+
+<script src="js/script.js?v=8"></script>
+<script src="js/upgrade.js?v=8"></script>
 </body>
 </html>
