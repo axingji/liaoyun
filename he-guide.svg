@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 320" width="300" height="320">
+  <defs>
+    <radialGradient id="bodyG" cx="42%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="62%" stop-color="#f6f8fa"/>
+      <stop offset="100%" stop-color="#dfe6ec"/>
+    </radialGradient>
+    <radialGradient id="headG" cx="42%" cy="32%" r="78%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f4f6f8"/>
+      <stop offset="100%" stop-color="#dde3e9"/>
+    </radialGradient>
+    <linearGradient id="blackG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a4f56"/>
+      <stop offset="55%" stop-color="#26292e"/>
+      <stop offset="100%" stop-color="#101216"/>
+    </linearGradient>
+    <linearGradient id="tailG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3c4148"/>
+      <stop offset="100%" stop-color="#0c0e12"/>
+    </linearGradient>
+    <radialGradient id="crownG" cx="45%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#ef5b4f"/>
+      <stop offset="70%" stop-color="#d22630"/>
+      <stop offset="100%" stop-color="#9c131c"/>
+    </radialGradient>
+    <linearGradient id="beakG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#cfc4a5"/>
+      <stop offset="60%" stop-color="#a99e80"/>
+      <stop offset="100%" stop-color="#7d7358"/>
+    </linearGradient>
+    <linearGradient id="vestG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fdf7e4"/>
+      <stop offset="100%" stop-color="#efe0ba"/>
+    </linearGradient>
+    <linearGradient id="redG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d83a44"/>
+      <stop offset="100%" stop-color="#a01622"/>
+    </linearGradient>
+    <radialGradient id="cheekG" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f7a8a0" stop-opacity=".85"/>
+      <stop offset="100%" stop-color="#f7a8a0" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#2a0e16" flood-opacity=".35"/>
+    </filter>
+  </defs>
+
+  <!-- 地面祥云投影 -->
+  <ellipse cx="150" cy="296" rx="92" ry="14" fill="#1d0a10" opacity=".28"/>
+  <path d="M86 292 q10 -12 24 -6 q8 -12 26 -6 q14 -10 30 -2 q16 -8 30 4 q12 -2 16 8 q-12 8 -60 8 q-44 1 -66 -6z"
+        fill="#f0d68a" opacity=".5"/>
+
+  <!-- 双腿（仙鹤细黑腿） -->
+  <g stroke="url(#blackG)" stroke-linecap="round" fill="none">
+    <path d="M132 244 C130 262 128 276 126 290" stroke-width="9"/>
+    <path d="M172 244 C174 262 176 276 178 290" stroke-width="9"/>
+  </g>
+  <g fill="#17191d">
+    <path d="M126 290 q-14 3 -22 -1 q10 8 23 5 z"/>
+    <path d="M126 290 q4 7 14 7 q-2 -8 -12 -9 z"/>
+    <path d="M178 290 q14 3 22 -1 q-10 8 -23 5 z"/>
+    <path d="M178 290 q-4 7 -14 7 q2 -8 12 -9 z"/>
+  </g>
+
+  <!-- 黑色尾羽 -->
+  <g fill="url(#tailG)">
+    <path d="M208 158 C240 150 258 168 262 196 C244 188 226 188 210 198 Z"/>
+    <path d="M214 172 C246 172 258 190 258 212 C240 200 226 200 212 208 Z"/>
+    <path d="M206 146 C232 132 252 142 260 166 C240 160 224 162 208 172 Z"/>
+  </g>
+
+  <!-- 身体（白色绒球） -->
+  <path d="M82 182
+           C82 128 118 104 156 104
+           C204 104 232 134 232 184
+           C232 232 198 254 156 254
+           C110 254 82 230 82 182 Z"
+        fill="url(#bodyG)" stroke="#d3dbe2" stroke-width="2" filter="url(#soft)"/>
+  <!-- 腹部绒羽鳞纹 -->
+  <g fill="none" stroke="#d7dee5" stroke-width="2.4" stroke-linecap="round" opacity=".9">
+    <path d="M108 214 q10 10 20 0 q10 10 20 0 q10 10 20 0 q10 10 20 0"/>
+    <path d="M120 232 q10 9 20 0 q10 9 20 0 q10 9 20 0"/>
+  </g>
+
+  <!-- 左侧收拢的翅膀（带红蓝绣边） -->
+  <path d="M92 158 C70 166 66 200 84 220 C96 234 116 232 122 218
+           C128 200 116 166 92 158 Z"
+        fill="url(#bodyG)" stroke="#d3dbe2" stroke-width="2"/>
+  <g fill="none" stroke="#d7dee5" stroke-width="2" stroke-linecap="round">
+    <path d="M90 176 q12 10 24 4"/>
+    <path d="M86 192 q12 10 26 4"/>
+  </g>
+  <path d="M84 220 C96 234 116 232 122 218" fill="none" stroke="#b3202c" stroke-width="5" stroke-linecap="round"/>
+  <path d="M88 212 C98 224 112 224 118 214" fill="none" stroke="#2f6fb0" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- 刺绣小马甲 -->
+  <path d="M106 132 L150 176 L194 132
+           C208 146 214 168 214 194
+           C214 230 190 248 150 248
+           C110 248 90 230 90 194
+           C90 168 96 146 106 132 Z"
+        fill="url(#vestG)" stroke="#c9b37c" stroke-width="2"/>
+  <!-- 马甲白色毛边 -->
+  <path d="M96 232 C112 248 190 248 206 232 C200 244 184 252 150 252 C118 252 102 244 96 232 Z"
+        fill="#fbf7ec" opacity=".95"/>
+  <!-- 红色镶边 V 领 -->
+  <path d="M106 132 L150 172 L194 132" fill="none" stroke="#e8c168" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M108 132 L150 170 L192 132" fill="none" stroke="url(#redG)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 海水江崖蓝纹 -->
+  <g fill="none" stroke="#2f6fb0" stroke-width="3.2" stroke-linecap="round">
+    <path d="M112 204 q8 -8 16 0 t16 0 t16 0 t16 0"/>
+    <path d="M120 218 q7 -7 14 0 t14 0 t14 0"/>
+  </g>
+  <g fill="none" stroke="#7fb0d8" stroke-width="1.8" stroke-linecap="round">
+    <path d="M116 210 q6 -6 12 0 t12 0 t12 0 t12 0"/>
+  </g>
+  <!-- 小祥云 -->
+  <g fill="none" stroke="#2f6fb0" stroke-width="2.4" stroke-linecap="round">
+    <path d="M132 190 q5 -6 10 -1 q5 -6 10 1 q2 4 -3 5 h-14 q-5 0 -3 -5z"/>
+  </g>
+
+  <!-- 黑脖颈（S 形） -->
+  <path d="M136 128 C118 116 116 92 126 74"
+        fill="none" stroke="url(#blackG)" stroke-width="30" stroke-linecap="round"/>
+  <path d="M132 120 C122 108 122 92 128 80"
+        fill="none" stroke="#4a4f56" stroke-width="7" stroke-linecap="round" opacity=".6"/>
+
+  <!-- 头部（白色绒球） -->
+  <circle cx="124" cy="66" r="34" fill="url(#headG)" stroke="#d3dbe2" stroke-width="2"/>
+  <!-- 后颈黑色延入头部 -->
+  <path d="M96 58 C100 80 116 92 136 92 C122 86 110 74 104 58 Z" fill="url(#blackG)"/>
+  <!-- 红顶（丹顶） -->
+  <path d="M98 50 C100 32 118 24 134 28 C148 32 156 42 156 52
+           C142 44 118 44 98 50 Z" fill="url(#crownG)"/>
+  <ellipse cx="118" cy="38" rx="10" ry="4" fill="#ff8a7a" opacity=".55"/>
+
+  <!-- 脸颊腮红 -->
+  <ellipse cx="132" cy="82" rx="10" ry="6" fill="url(#cheekG)"/>
+
+  <!-- 眼睛 -->
+  <circle cx="133" cy="64" r="9.5" fill="#fff"/>
+  <circle cx="134.5" cy="65" r="6.4" fill="#20242a"/>
+  <circle cx="137" cy="62" r="2.1" fill="#fff"/>
+  <circle cx="132.5" cy="67.5" r="1" fill="#fff" opacity=".8"/>
+  <!-- 睫毛 -->
+  <path d="M139 57 q4 -3 7 -2" fill="none" stroke="#20242a" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- 长喙 -->
+  <path d="M146 66 L190 60 L148 72 Z" fill="url(#beakG)" stroke="#8c8266" stroke-width="1.2"/>
+  <path d="M148 72 L190 60 L149 75.5 Z" fill="#948a6e" opacity=".55"/>
+  <path d="M150 70 L184 66" stroke="#6f6649" stroke-width="1.4" opacity=".6"/>
+
+  <!-- 举起的招呼翅膀 -->
+  <g>
+    <path d="M198 132 C214 108 226 90 238 72"
+          fill="none" stroke="url(#bodyG)" stroke-width="24" stroke-linecap="round"/>
+    <path d="M200 128 C214 108 224 92 235 76"
+          fill="none" stroke="#d7dee5" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>
+    <!-- 袖口红蓝绣边 -->
+    <path d="M192 140 C202 128 212 120 220 112" fill="none" stroke="#b3202c" stroke-width="7" stroke-linecap="round"/>
+    <path d="M196 136 C204 128 212 122 218 116" fill="none" stroke="#2f6fb0" stroke-width="3" stroke-linecap="round"/>
+    <!-- 张开的翅羽（招手手） -->
+    <g fill="url(#bodyG)" stroke="#d3dbe2" stroke-width="1.6">
+      <ellipse cx="242" cy="66" rx="6.5" ry="11" transform="rotate(-28 242 66)"/>
+      <ellipse cx="250" cy="60" rx="6.5" ry="11.5" transform="rotate(-8 250 60)"/>
+      <ellipse cx="257" cy="62" rx="6" ry="11" transform="rotate(12 257 62)"/>
+      <ellipse cx="261" cy="70" rx="5.5" ry="10" transform="rotate(32 261 70)"/>
+    </g>
+  </g>
+
+  <!-- 身上细碎绒光 -->
+  <g fill="#ffffff" opacity=".8">
+    <ellipse cx="126" cy="150" rx="9" ry="5" transform="rotate(-18 126 150)"/>
+    <ellipse cx="184" cy="158" rx="7" ry="4" transform="rotate(20 184 158)"/>
+  </g>
+</svg>
